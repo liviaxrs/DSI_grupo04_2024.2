@@ -23,15 +23,14 @@ class MyApp extends StatelessWidget {
         "/tela_login": (context) => const LoginScreen(),
         "/tela_cadastro": (context) => const SignupScreen(),
         "/tela_todolist": (context) => const TodolistScreen(),
-        "/tela_adicionartask": (context) => const adicionarTask(),
+        "/tela_adicionartask": (context) => const AdicionarTask(),
         "/tela_perfil": (context) => const perfilScreen(),
         "/tela_flashcards": (context) => const flashcardScreen(),
         "/tela_mapa": (context) => const mapaScreen(),
         
          },
     );
-  
-      
+
     }
   }
 

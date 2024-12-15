@@ -15,13 +15,13 @@ class _TodolistScreenState extends State<TodolistScreen> {
 
   String getCurrentDay() {
     final List<String> daysOfWeek = [
-      'Domingo',
-      'Segunda',
-      'Terça',
-      'Quarta',
-      'Quinta',
-      'Sexta',
-      'Sábado'
+      'domingo',
+      'segunda',
+      'terça',
+      'quarta',
+      'quinta',
+      'sexta',
+      'sábado'
     ];
     return daysOfWeek[DateTime.now().weekday % 7];
   }
@@ -39,7 +39,7 @@ class _TodolistScreenState extends State<TodolistScreen> {
         toolbarHeight: 70,
         backgroundColor: const Color(0xFF133E87),
         title: Text(
-          getCurrentDay(),
+          "Hoje é ${getCurrentDay()}",
           style: const TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -77,14 +77,12 @@ class _TodolistScreenState extends State<TodolistScreen> {
           // Task List Section
           Expanded(
             child: ListView.builder(
-              itemCount: 10, // Replace with dynamic task count
+              itemCount: 5, // Replace with dynamic task count
               itemBuilder: (context, index) {
                 return Card(
-    
                   margin: const EdgeInsets.symmetric(
                       horizontal: 16.0, vertical: 7.0),
                   child: ListTile(
-                    
                     leading: const Icon(Icons.check_circle_outline),
                     title: Text('Task ${index + 1}'),
                     subtitle: const Text('Task description here'),
