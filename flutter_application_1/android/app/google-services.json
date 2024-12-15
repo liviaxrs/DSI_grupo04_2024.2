@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "64723911142",
+    "project_id": "proaluno-81799",
+    "storage_bucket": "proaluno-81799.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:64723911142:android:7a27d99d018e3dae5e1627",
+        "android_client_info": {
+          "package_name": "ProAluno.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDtOi-5xQR0EnwW_hZ6h6LqEuDH6KkymCg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
