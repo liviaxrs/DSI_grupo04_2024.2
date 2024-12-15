@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:date_picker_timeline/date_picker_timeline.dart';
 import 'package:proAluno/Widgets/addButton.dart';
 
-
 class TodolistScreen extends StatefulWidget {
   const TodolistScreen({super.key});
 
@@ -104,4 +103,3 @@ class _TodolistScreenState extends State<TodolistScreen> {
     );
   }
 }
-
