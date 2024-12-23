@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'screens/tela_cadastro.dart';
-import 'screens/tela_Login.dart';
+import 'screens/tela_login.dart';
 import 'screens/tela_todolist.dart';
 import 'screens/tela_adicionartask.dart';
 import 'screens/tela_perfil.dart';

@@ -3,7 +3,7 @@ import 'package:proAluno/screens/tela_flashcards.dart';
 import 'package:proAluno/screens/tela_mapa.dart';
 import 'package:proAluno/screens/tela_perfil.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
-import '../Screens/tela_todolist.dart';
+import '../screens/tela_todolist.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
