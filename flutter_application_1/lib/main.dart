@@ -8,6 +8,8 @@ import 'screens/tela_adicionartask.dart';
 import 'screens/tela_perfil.dart';
 import 'screens/tela_flashcards.dart';
 import 'screens/tela_mapa.dart';
+import 'screens/tela_esqueci_senha.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,6 +40,7 @@ class MyApp extends StatelessWidget {
         "/tela_perfil": (context) => const perfilScreen(),
         "/tela_flashcards": (context) => const flashcardScreen(),
         "/tela_mapa": (context) => const mapaScreen(),
+        "/tela_esqueci_senha": (context) => const TelaEsqueciSenha(),
       },
     );
   }
