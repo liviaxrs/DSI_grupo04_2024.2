@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'auth_registro.dart'; 
+import '../models/user.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -21,54 +22,56 @@ class SignupScreenState extends State<SignupScreen> {
 
   // Função para cadastrar usuário
   Future<void> _cadastrarUsuario() async {
-    // Validação de entradas
-    if (_nomeController.text.isEmpty ||
-        _usuarioController.text.isEmpty ||
-        _emailController.text.isEmpty ||
-        _senhaController.text.isEmpty) {
-      _showSnackBar('Preencha todos os campos!');
-      return;
-    }
-
-    // Verificação do formato do e-mail
-    final String email = _emailController.text;
-    final RegExp emailRegex =
-        RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$");
-    if (!emailRegex.hasMatch(email)) {
-      _showSnackBar('Por favor, insira um e-mail válido!');
-      return;
-    }
-
-    // Verificação do comprimento da senha
-    if (_senhaController.text.length < 6) {
-      _showSnackBar('A senha deve ter pelo menos 6 caracteres!');
-      return;
-    }
-
-    try {
-      // Criação do usuário com Firebase Authentication
-      // ignore: unused_local_variable
-      UserCredential userCredential = await _authService.cadastrarUsuario(
-          _emailController.text, _senhaController.text);
-
-      // Exibe mensagem de sucesso
-      _showSnackBar('Cadastro realizado com sucesso!');
-    } catch (e) {
-      // Tratamento de erros mais específicos
-      String errorMessage = 'Erro desconhecido';
-      if (e is FirebaseAuthException) {
-        if (e.code == 'email-already-in-use') {
-          errorMessage = 'Este e-mail já está em uso';
-        } else if (e.code == 'weak-password') {
-          errorMessage = 'A senha fornecida é muito fraca';
-        } else if (e.code == 'invalid-email') {
-          errorMessage = 'E-mail inválido';
-        }
-      }
-
-      _showSnackBar(errorMessage);
-    }
+  if (_nomeController.text.isEmpty ||
+      _usuarioController.text.isEmpty ||
+      _emailController.text.isEmpty ||
+      _senhaController.text.isEmpty) {
+    _showSnackBar('Preencha todos os campos!');
+    return;
   }
+
+  // Verificação do formato do e-mail
+  final String email = _emailController.text;
+  final RegExp emailRegex =
+      RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$");
+  if (!emailRegex.hasMatch(email)) {
+    _showSnackBar('Por favor, insira um e-mail válido!');
+    return;
+  }
+
+  // Verificação do comprimento da senha
+  if (_senhaController.text.length < 6) {
+    _showSnackBar('A senha deve ter pelo menos 6 caracteres!');
+    return;
+  }
+
+  try {
+    // Chama o serviço de autenticação e Firestore
+    UserModel? usuario = await _authService.cadastrarUsuario(
+      _nomeController.text,
+      _usuarioController.text,
+      _emailController.text,
+      _senhaController.text,
+    );
+
+    if (usuario != null) {
+      _showSnackBar('Cadastro realizado com sucesso!');
+      // Aqui você pode redirecionar para a tela de login ou principal
+    }
+  } catch (e) {
+    String errorMessage = 'Erro desconhecido';
+    if (e is FirebaseAuthException) {
+      if (e.code == 'email-already-in-use') {
+        errorMessage = 'Este e-mail já está em uso';
+      } else if (e.code == 'weak-password') {
+        errorMessage = 'A senha fornecida é muito fraca';
+      } else if (e.code == 'invalid-email') {
+        errorMessage = 'E-mail inválido';
+      }
+    }
+    _showSnackBar(errorMessage);
+  }
+}
 
   // Método privado para exibir SnackBar
   void _showSnackBar(String message) {

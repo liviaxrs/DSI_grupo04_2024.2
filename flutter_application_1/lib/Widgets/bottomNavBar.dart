@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:proAluno/screens/tela_flashcards.dart';
 import 'package:proAluno/screens/tela_mapa.dart';
-import 'package:proAluno/screens/tela_perfil.dart';
+import '../screens/tela_perfil.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import '../screens/tela_todolist.dart';
 
@@ -44,7 +44,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onPageChanged: _onPageChanged,
         children: const [
           TodolistScreen(),
-          perfilScreen(),
+          PerfilScreen(),
           flashcardScreen(),
           mapaScreen(), 
         ],

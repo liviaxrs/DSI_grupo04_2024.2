@@ -9,6 +9,7 @@ import 'screens/tela_perfil.dart';
 import 'screens/tela_flashcards.dart';
 import 'screens/tela_mapa.dart';
 import 'screens/tela_esqueci_senha.dart';
+import 'screens/notificacoes.dart';
 
 
 void main() async {
@@ -37,10 +38,11 @@ class MyApp extends StatelessWidget {
         "/tela_cadastro": (context) => const SignupScreen(),
         "/tela_todolist": (context) => const TodolistScreen(),
         "/tela_adicionartask": (context) => const AdicionarTask(),
-        "/tela_perfil": (context) => const perfilScreen(),
+        "/tela_perfil": (context) => const PerfilScreen(),
         "/tela_flashcards": (context) => const flashcardScreen(),
         "/tela_mapa": (context) => const mapaScreen(),
         "/tela_esqueci_senha": (context) => const TelaEsqueciSenha(),
+        "/notificacoes": (context) => const NotificacoesScreen(),
       },
     );
   }
