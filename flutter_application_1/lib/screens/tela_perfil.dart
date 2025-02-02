@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../models/user.dart';
 import '../models/task.dart';
+import '../models/meta.dart';
 
 class PerfilScreen extends StatefulWidget {
   const PerfilScreen({super.key});
@@ -14,6 +15,8 @@ class PerfilScreen extends StatefulWidget {
 class _PerfilScreenState extends State<PerfilScreen> {
   UserModel? _usuario;
   List<Task> _tasksCompletadas = []; // Lista para armazenar as tasks completadas
+  Meta? _meta; // Variável para armazenar a meta do usuário
+  int _tasksCompletadasHoje = 0;
 
   @override
   void initState() {
@@ -103,18 +106,137 @@ class _PerfilScreenState extends State<PerfilScreen> {
     User? usuarioAtual = FirebaseAuth.instance.currentUser;
 
     if (usuarioAtual != null) {
-      QuerySnapshot<Map<String, dynamic>> snapshot = await FirebaseFirestore.instance
+      QuerySnapshot<Map<String, dynamic>> snapshot = await FirebaseFirestore
+          .instance
           .collection('tasks')
           .where('userId', isEqualTo: usuarioAtual.uid)
-          .where('isComplete', isEqualTo: true) // Filtra as tasks completadas
+          .where('isComplete', isEqualTo: true)
           .get();
 
+      List<Task> tasks = snapshot.docs
+          .map((doc) => Task.fromJson(doc.id, doc.data()))
+          .toList();
+
+      String hoje = DateTime.now().toString().substring(0, 10);
+
+      List<String> idsTasksHoje = tasks
+          .where((task) => task.date == hoje)
+          .map((task) => task.id)
+          .toList();
+
       setState(() {
-        _tasksCompletadas = snapshot.docs
-            .map((doc) => Task.fromJson(doc.id, doc.data()))
-            .toList();
+        _tasksCompletadas = tasks;
+        _tasksCompletadasHoje = idsTasksHoje.length;
       });
+
+      // Garante que a meta do dia existe
+      await _buscarMetaDoDia();
+
+      // Atualiza a meta com as tasks concluídas do dia
+      if (_meta != null) {
+        _meta = Meta(
+          id: _meta!.id,
+          userId: _meta!.userId,
+          date: _meta!.date,
+          taskGoal: _meta!.taskGoal,
+          taskIds: idsTasksHoje, // Atualiza as tasks do dia
+        );
+
+        await _atualizarMetaNoFirestore();
+      }
     }
+  }
+
+  // Função para carregar a meta do usuário
+  Future<void> _buscarMetaDoDia() async {
+    String hoje = DateTime.now().toString().split(' ')[0]; // Data no formato YYYY-MM-DD
+    var snapshot = await FirebaseFirestore.instance
+        .collection('metas')
+        .where('userId', isEqualTo: _usuario!.id)
+        .where('date', isEqualTo: hoje)
+        .limit(1)
+        .get();
+
+    if (snapshot.docs.isNotEmpty) {
+      var dados = snapshot.docs.first.data();
+      setState(() {
+        _meta = Meta.fromJson(snapshot.docs.first.id, dados);
+      });
+    } else {
+      setState(() {
+        _meta = Meta(
+          id: FirebaseFirestore.instance.collection('metas').doc().id,
+          userId: _usuario!.id,
+          date: hoje,
+          taskGoal: 5, // Valor padrão
+          taskIds: [],
+        );
+      });
+      _atualizarMetaNoFirestore(); // Salva no banco
+    }
+  }
+
+  // Função para editar a meta
+  void _alterarMeta() {
+    TextEditingController controller = TextEditingController(
+      text: (_meta?.taskGoal ?? 5).toString(),
+    );
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Alterar Meta"),
+          content: TextField(
+            controller: controller,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(labelText: "Nova meta diária"),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text("Cancelar"),
+            ),
+            TextButton(
+              onPressed: () async {
+                int novaMeta = int.tryParse(controller.text) ?? 5;
+
+                setState(() {
+                  _meta = Meta(
+                    id: _meta!.id, // Mantém o ID
+                    userId: _meta!.userId,
+                    date: _meta!.date,
+                    taskGoal: novaMeta, // Atualiza só a meta
+                    taskIds: _meta!.taskIds, // Mantém as tasks
+                  );
+                });
+
+                await _atualizarMetaNoFirestore(); // Salva no Firestore
+                Navigator.of(context).pop();
+              },
+              child: const Text("Salvar"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
+  Future<void> _atualizarMetaNoFirestore() async {
+    if (_meta == null) return; // Evita erro se _meta for nulo
+
+    await FirebaseFirestore.instance
+        .collection('metas') // Substitua pelo nome correto da coleção
+        .doc(_meta!.id)
+        .set({
+      'userId': _meta!.userId,
+      'date': _meta!.date,
+      'taskGoal': _meta!.taskGoal,
+      'taskIds': _meta!.taskIds, // Certifique-se de que está correto
+    }, SetOptions(merge: true)); // Mantém os dados existentes e atualiza só os alterados
   }
 
   // Função para sair da conta
@@ -257,6 +379,64 @@ class _PerfilScreenState extends State<PerfilScreen> {
                       ),
                     ),
                     const SizedBox(height: 30),
+
+                    // Card com a meta do usuário
+                    Card(
+                      elevation: 5,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Meta: ${_meta?.taskGoal ?? 5} tarefas',
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Concluídas hoje: $_tasksCompletadasHoje',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            // Card com a porcentagem de conclusão
+                            Column(
+                              children: [
+                                Text(
+                                  '${_tasksCompletadasHoje}/${_meta?.taskGoal}',
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  '${(_tasksCompletadasHoje / (_meta?.taskGoal ?? 1) * 100).toStringAsFixed(0)}%',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            // Ícone de edição da meta
+                            IconButton(
+                              icon: const Icon(Icons.edit),
+                              onPressed: () => _alterarMeta(),
+                              color: const Color(0xFF133E87),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                     
                     // Exibe as tasks completadas
                     if (_tasksCompletadas.isNotEmpty) ...[
