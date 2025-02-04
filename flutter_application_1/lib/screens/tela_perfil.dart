@@ -324,9 +324,9 @@ class _PerfilScreenState extends State<PerfilScreen> {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications), // Ícone de sininho
+            icon: const Icon(Icons.notifications),
             onPressed: () {
-              Navigator.pushNamed(context, '/notificacoes'); // Navega para a tela de notificações
+              Navigator.pushNamed(context, '/notificacoes');
             },
             color: Colors.white,
           ),
@@ -337,168 +337,196 @@ class _PerfilScreenState extends State<PerfilScreen> {
           ),
         ],
       ),
-
+      backgroundColor: const Color.fromARGB(255, 232, 230, 230),
       body: Center(
         child: _usuario == null
             ? const CircularProgressIndicator()
-            : SingleChildScrollView( // Para permitir rolagem quando as tasks são muitas
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    CircleAvatar(
-                      radius: 60,
-                      backgroundImage: _usuario!.fotoUrl != null
-                          ? NetworkImage(_usuario!.fotoUrl!)
-                          : const AssetImage("assets/images/perfil_padrao.png") 
-                              as ImageProvider,
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          _usuario!.nome,
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
+            : SingleChildScrollView( // Permite rolagem quando as tasks são muitas
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 16.0), // Distância da AppBar
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircleAvatar(
+                        radius: 60,
+                        backgroundImage: _usuario!.fotoUrl != null
+                            ? NetworkImage(_usuario!.fotoUrl!)
+                            : const AssetImage("assets/images/perfil_padrao.png") 
+                                as ImageProvider,
+                      ),
+                      const SizedBox(height: 20),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            _usuario!.nome,
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.edit),
-                          onPressed: _editarNome,
-                          color: const Color(0xFF133E87),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      "@${_usuario!.nomeUsuario}",
-                      style: const TextStyle(
-                        fontSize: 18,
-                        color: Colors.grey,
+                          IconButton(
+                            icon: const Icon(Icons.edit),
+                            onPressed: _editarNome,
+                            color: const Color(0xFF133E87),
+                          ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: 30),
-
-                    // Card com a meta do usuário
-                    Card(
-                      elevation: 5,
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Meta: ${_meta?.taskGoal ?? 5} tarefas',
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Concluídas hoje: $_tasksCompletadasHoje',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            // Card com a porcentagem de conclusão
-                            Column(
-                              children: [
-                                Text(
-                                  '${_tasksCompletadasHoje}/${_meta?.taskGoal}',
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  '${(_tasksCompletadasHoje / (_meta?.taskGoal ?? 1) * 100).toStringAsFixed(0)}%',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            // Ícone de edição da meta
-                            IconButton(
-                              icon: const Icon(Icons.edit),
-                              onPressed: () => _alterarMeta(),
-                              color: const Color(0xFF133E87),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    
-                    // Exibe as tasks completadas
-                    if (_tasksCompletadas.isNotEmpty) ...[
-                      const Text(
-                        "Tasks Completadas:",
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: _tasksCompletadas.length,
-                        itemBuilder: (context, index) {
-                          final task = _tasksCompletadas[index];
-                          return Card(
-                            margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                            child: ListTile(
-                              title: Text(task.title),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text("Concluída em: ${task.date} às ${task.hour}"),
-                                  const SizedBox(height: 5),
-                                  Text(task.description),
-                                ],
-                              ),
-                              trailing: const Icon(Icons.check_circle, color: Colors.green),
-                            ),
-                          );
-                        },
-                      ),
-                    ] else ...[
-                      const Text(
-                        "Nenhuma task concluída.",
-                        style: TextStyle(
+                      const SizedBox(height: 10),
+                      Text(
+                        "@${_usuario!.nomeUsuario}",
+                        style: const TextStyle(
                           fontSize: 18,
                           color: Colors.grey,
                         ),
                       ),
-                    ],
+                      const SizedBox(height: 30),
 
-                    const SizedBox(height: 30),
-                    ElevatedButton(
-                      onPressed: _confirmarExclusaoConta, // Chama a função de confirmação
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF133E87),
-                        padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: Card(
+                              elevation: 5,
+                              child: Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.center, // Alinhamento centralizado
+                                  children: [
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      '${_tasksCompletadasHoje}/${_meta?.taskGoal}',
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      _tasksCompletadasHoje >= (_meta?.taskGoal ?? 0)
+                                          ? 'Parabéns você cumpriu a meta do dia :)'
+                                          : 'Você ainda não cumpriu a meta diária :(',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: _tasksCompletadasHoje >= (_meta?.taskGoal ?? 0)
+                                            ? Colors.green
+                                            : Colors.red,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10), // Espaço entre os cards
+                          Expanded(
+                            child: Card(
+                              elevation: 5,
+                              child: Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Column(
+                                  children: [
+                                    const SizedBox(height: 8),
+                                    const Text(
+                                      'Progresso',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    Text(
+                                      '${(_tasksCompletadasHoje / (_meta?.taskGoal ?? 1) * 100).toStringAsFixed(0)}%',
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.edit),
+                            onPressed: () => _alterarMeta(),
+                            color: const Color(0xFF133E87),
+                          ),
+                        ],
                       ),
-                      child: const Text(
-                        "Excluir Conta",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+
+
+                      
+                      const SizedBox(height: 30),
+                      // Exibe as tasks completadas
+                      if (_tasksCompletadas.isNotEmpty) ...[
+                        const Text(
+                          "Tasks Completadas:",
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 30),
+                        ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: _tasksCompletadas.length,
+                          itemBuilder: (context, index) {
+                            final task = _tasksCompletadas[index];
+                            return Card(
+                              margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                              color: const Color(0xFFD5FFCB),
+                              child: ListTile(
+                                title: Text(
+                                  task.title,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold, // Título em negrito
+                                  ),
+                                ),
+                                subtitle: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text("Concluída em: ${task.date} às ${task.hour}"),
+                                    const SizedBox(height: 5),
+                                    Text(task.description),
+                                  ],
+                                ),
+                                trailing: const Icon(Icons.check_circle, color: Colors.green),
+                              ),
+                            );
+                          },
+                        ),
+                      ] else ...[
+                        const Text(
+                          "Nenhuma task concluída.",
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
+
+                      const SizedBox(height: 30),
+                      ElevatedButton(
+                        onPressed: _confirmarExclusaoConta, // Chama a função de confirmação
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF133E87),
+                          padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                        ),
+                        child: const Text(
+                          "Excluir Conta",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 30),
+                    ],
+                  ),
                 ),
-              ),
-      ),
+        ),
+      )
     );
   }
 }

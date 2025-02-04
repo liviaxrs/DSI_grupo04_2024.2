@@ -33,6 +33,7 @@ dependencies:
   flutter_svg: ^2.0.17
   flutter:
     sdk: flutter
+  percent_indicator: ^4.2.3
   flutter_localizations:
     sdk: flutter
   fl_chart: ^0.63.0
