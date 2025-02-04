@@ -31,8 +31,8 @@ class _FlashcardScreenState extends State<flashcardScreen> {
 
   // incluir novo deck no fstore
   void _addDeck() async {
-    int newDeckNumber = decks.length + 1;
-    String newDeckName = "Deck $newDeckNumber";
+    // int newDeckNumber = decks.length + 1;
+    String newDeckName = "Deck"; // $newDeckNumber
 
     await _firestore.collection('decks').add({
       'name': newDeckName,
@@ -164,7 +164,6 @@ class _FlashcardScreenState extends State<flashcardScreen> {
               ),
               child: ListTile(
                 title: Text(decks[index]),
-                subtitle: const Text("Não possui cards ainda"),
                 trailing: isSelecting
                     ? Checkbox(
                         value: selectedDecks.contains(index),
