@@ -322,6 +322,13 @@ class _PerfilScreenState extends State<PerfilScreen> {
         ),
         backgroundColor: const Color(0xFF133E87),
         centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.settings), // Ícone de engrenagem ⚙️
+          onPressed: () {
+            Navigator.pushNamed(context, "/tela_edicao_perfil");
+          },
+          color: Colors.white,
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications),
