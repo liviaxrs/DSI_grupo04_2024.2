@@ -3,8 +3,9 @@ import 'package:date_picker_timeline/date_picker_timeline.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:proAluno/Widgets/addButton.dart';
+import 'package:proAluno/screens/tela_editarTask.dart';
 import '../models/task.dart';
-import 'package:intl/intl.dart';
+
 
 class TodolistScreen extends StatefulWidget {
   const TodolistScreen({super.key});
@@ -77,124 +78,6 @@ class _TodolistScreenState extends State<TodolistScreen> {
 
 
   // função para editar tasks
-  void _editTask(BuildContext context, Task task) {
-    final titleController = TextEditingController(text: task.title);
-    final descriptionController = TextEditingController(text: task.description);
-    final dateController = TextEditingController(text: task.date);
-    final timeController = TextEditingController(text: task.hour);
-
-showDialog(
-    context: context,
-    builder: (context) {
-      return AlertDialog(
-        title: const Text('Editar Tarefa'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: titleController,
-                decoration: const InputDecoration(labelText: 'Título'),
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: descriptionController,
-                decoration: const InputDecoration(labelText: 'Descrição'),
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: dateController,
-                      readOnly: true, // Prevents manual editing
-                      decoration: const InputDecoration(
-                        labelText: 'Data',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  IconButton(
-                    icon: const Icon(Icons.calendar_today),
-                    onPressed: () async {
-                      DateTime? pickedDate = await showDatePicker(
-                        context: context,
-                        initialDate: DateTime.now(),
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime(2100),
-                      );
-                      if (pickedDate != null) {
-                        // Update the date in the controller
-                        dateController.text = DateFormat('yyyy-MM-dd').format(pickedDate);
-                      }
-                    },
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: timeController,
-                      readOnly: true, 
-                      decoration: InputDecoration(
-                        labelText: 'Horário',
-                        border: const OutlineInputBorder(),
-                        hintText: task.hour,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  IconButton(
-                    icon: const Icon(Icons.access_time),
-                    onPressed: () async {
-                      TimeOfDay? pickedTime = await showTimePicker(
-                        context: context,
-                        initialTime: TimeOfDay(
-                          hour: int.parse(task.hour.split(':')[0]),
-                          minute: int.parse(task.hour.split(':')[1]),
-                        ),
-                      );
-                      if (pickedTime != null) {
-                        timeController.text = pickedTime.format(context);
-              
-
-                      }
-                    },
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop(); // Close dialog without saving
-            },
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              // Update Firestore with all changes
-              FirebaseFirestore.instance.collection('tasks').doc(task.id).update({
-                'title': titleController.text,
-                'description': descriptionController.text,
-                'date': dateController.text,
-                'hour': timeController.text,
-              }).then((_) {
-                Navigator.of(context).pop(); // Close dialog after saving
-              });
-            },
-            child: const Text('Salvar'),
-          ),
-        ],
-      );
-    },
-  );
-}
 
   @override
 Widget build(BuildContext context) {
@@ -301,7 +184,9 @@ Widget build(BuildContext context) {
                         children: [
                           IconButton(
                             icon: const Icon(Icons.edit, color: Colors.black87),
-                            onPressed: () => _editTask(context, task),
+                            onPressed: () {
+                              Navigator.push(context, MaterialPageRoute(builder: (context) => EditarTask(task: task)));
+                            },
                           ),
                           Checkbox(
                             value: task.isComplete,
