@@ -25,7 +25,7 @@ class _AddCardScreenState extends State<AddCardScreen> {
     if (text.isEmpty || answer.isEmpty || userId == null) return;
 
     await _firestore.collection('decks')
-        .doc(widget.deckId) // Usa corretamente o deckId
+        .doc(widget.deckId) // 
         .collection('cards')
         .add({
           'text': text,
@@ -39,7 +39,22 @@ class _AddCardScreenState extends State<AddCardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Adicionar Card')),
+      backgroundColor: const Color.fromARGB(255, 232, 230, 230),
+      appBar: AppBar(
+        title: const Text('Adicionar Flashcard',
+          style: TextStyle(color: Colors.white,
+          fontWeight: FontWeight.bold,
+          ), 
+        ),
+        centerTitle: true,
+        backgroundColor: const Color.fromARGB(255, 19, 62, 135),
+        iconTheme: const IconThemeData(color: Colors.white),
+        leading: IconButton(icon: Icon(Icons.arrow_back_ios),
+          onPressed: () {
+            Navigator.pop(context); 
+          },
+        ),
+        ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -55,7 +70,13 @@ class _AddCardScreenState extends State<AddCardScreen> {
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: _saveCard,
-              child: const Text('Salvar Card'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color.fromARGB(255, 19, 62, 135),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+              child: const Text('Salvar Card',
+              style: TextStyle(color: Colors.white),
+              ),
             ),
           ],
         ),

@@ -107,11 +107,12 @@ class _FlashcardScreenState extends State<flashcardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color.fromARGB(255, 232, 230, 230),
       appBar: AppBar(
         title: const Text(
           "Flashcards",
           style: TextStyle(
-            color: Colors.white,
+            color:  Colors.white,
             fontWeight: FontWeight.bold,
           ),
         ),

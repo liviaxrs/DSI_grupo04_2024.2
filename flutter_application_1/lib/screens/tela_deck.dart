@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:proAluno/screens/tela_estudarflashcards.dart';
 import 'tela_addcard.dart';
 
 class DeckScreen extends StatefulWidget {
@@ -61,7 +62,6 @@ class _DeckScreenState extends State<DeckScreen> {
 
   void _editDeckName() async {
     TextEditingController _nameController = TextEditingController(text: deckName);
-
     await showDialog(
       context: context,
       builder: (context) {
@@ -101,6 +101,7 @@ class _DeckScreenState extends State<DeckScreen> {
         return false;
       },
       child: Scaffold(
+        backgroundColor: const Color.fromARGB(255, 232, 230, 230),
         appBar: AppBar(
           title: Text(deckName,
             style: const TextStyle(
@@ -112,7 +113,7 @@ class _DeckScreenState extends State<DeckScreen> {
           backgroundColor: const Color.fromARGB(255, 19, 62, 135),
           iconTheme: const IconThemeData(color: Colors.white),
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
+            icon: const Icon(Icons.arrow_back_ios),
             onPressed: () {
               Navigator.pop(context, true); // Garante atualização ao voltar
             },
@@ -172,7 +173,9 @@ class _DeckScreenState extends State<DeckScreen> {
                         ),
                         const SizedBox(height: 16),
                         ElevatedButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.push(context, MaterialPageRoute(builder: (context) => StudyFlashcardsScreen(deckId: widget.deckId)));
+                          },
                           style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 24, vertical: 12),
