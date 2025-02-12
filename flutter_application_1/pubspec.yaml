@@ -36,7 +36,7 @@ dependencies:
   percent_indicator: ^4.2.3
   flutter_localizations:
     sdk: flutter
-  fl_chart: ^0.63.0
+  fl_chart: ^0.70.2
 
 
 
@@ -48,11 +48,16 @@ dependencies:
   firebase_auth: ^5.3.4
   firebase_storage: ^12.3.7
   fluttertoast: ^8.2.10
-
-
+  google_maps_flutter: ^2.10.0
+  google_maps_flutter_web: ^0.5.10
+  geocoding: ^2.0.3 
+  location: ^4.3.0
+  geolocator: ^8.0.0
+  
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is

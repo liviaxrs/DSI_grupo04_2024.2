@@ -12,14 +12,12 @@ import 'screens/tela_esqueci_senha.dart';
 import 'screens/notificacoes.dart';
 import 'screens/tela_edicao_perfil.dart';
 
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Inicializando o Firebase com as opções
   await Firebase.initializeApp(
-    options: DefaultFirebaseOptions
-        .currentPlatform, 
+    options: DefaultFirebaseOptions.currentPlatform,
   );
 
   runApp(const MyApp());
@@ -41,7 +39,7 @@ class MyApp extends StatelessWidget {
         "/tela_adicionartask": (context) => const AdicionarTask(),
         "/tela_perfil": (context) => const PerfilScreen(),
         "/tela_flashcards": (context) => const flashcardScreen(),
-        "/tela_mapa": (context) => const mapaScreen(),
+        "/tela_mapa": (context) => MapaScreen(),
         "/tela_esqueci_senha": (context) => const TelaEsqueciSenha(),
         "/notificacoes": (context) => const NotificacoesScreen(),
         "/tela_edicao_perfil": (context) => const EdicaoPerfil(),

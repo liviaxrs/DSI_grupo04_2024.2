@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:proAluno/Widgets/bottomNavBar.dart';
 import 'tela_cadastro.dart';
 
-
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -63,83 +62,85 @@ class LoginScreenState extends State<LoginScreen> {
   }
 
   @override
-Widget build(BuildContext context) {
-  return Scaffold(
-    backgroundColor: const Color.fromARGB(255, 232, 230, 230),
-    body: Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircleAvatar(
-              radius: 60,
-              backgroundColor: Colors.blue,
-              child: ClipOval(
-                child: Image.asset(
-                  'assets/images/logo.png',
-                  fit: BoxFit.cover,
-                  width: 120,
-                  height: 120,
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color.fromARGB(255, 232, 230, 230),
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircleAvatar(
+                radius: 60,
+                backgroundColor: Colors.blue,
+                child: ClipOval(
+                  child: Image.asset(
+                    'assets/images/logo.png',
+                    fit: BoxFit.cover,
+                    width: 120,
+                    height: 120,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              'Seja bem-vindo ao ProAluno',
-              style: TextStyle(
-                  fontSize: 32, color: Color.fromRGBO(19, 62, 135, 1)),
-            ),
-            const SizedBox(height: 24),
-            _buildTextField(_emailController, 'Email', Icons.email), 
-            const SizedBox(height: 16),
-            _buildTextField(_senhaController, 'Senha', Icons.lock,
-                obscureText: true),
-            const SizedBox(height: 5),   
-            GestureDetector(
+              const SizedBox(height: 24),
+              const Text(
+                'Seja bem-vindo ao ProAluno',
+                style: TextStyle(
+                    fontSize: 32, color: Color.fromRGBO(19, 62, 135, 1)),
+              ),
+              const SizedBox(height: 24),
+              _buildTextField(_emailController, 'Email', Icons.email),
+              const SizedBox(height: 16),
+              _buildTextField(_senhaController, 'Senha', Icons.lock,
+                  obscureText: true),
+              const SizedBox(height: 5),
+              GestureDetector(
                 onTap: () {
                   Navigator.pushNamed(context, '/tela_esqueci_senha');
                 },
-                child: const Text('Esqueceu a senha?',
+                child: const Text(
+                  'Esqueceu a senha?',
                   style: TextStyle(
-                    fontSize: 13, color: Color.fromRGBO(19, 62, 135, 1), decoration: TextDecoration.underline,
+                    fontSize: 13,
+                    color: Color.fromRGBO(19, 62, 135, 1),
+                    decoration: TextDecoration.underline,
                   ),
                 ),
-              ), 
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: _loginUsuario,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color.fromRGBO(19, 62, 135, 1),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: _loginUsuario,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color.fromRGBO(19, 62, 135, 1),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  minimumSize: const Size(300, 35),
                 ),
-                minimumSize: const Size(300, 35),
+                child: const Text('Acessar',
+                    style: TextStyle(color: Colors.white)),
               ),
-              child: const Text('Acessar',
-                  style: TextStyle(color: Colors.white)),
-            ),
-            const SizedBox(height: 25),
-            const Text('Não tem uma conta?',
-                style: TextStyle(
-                    fontSize: 13, color: Color.fromRGBO(0, 0, 0, 0.2))),
-            const SizedBox(height: 5),
-            GestureDetector(
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const SignupScreen()),
-              ),
-              child: const Text('Cadastre-se',
+              const SizedBox(height: 25),
+              const Text('Não tem uma conta?',
                   style: TextStyle(
-                      fontSize: 13, color: Color.fromRGBO(19, 62, 135, 1))),
-            ),
-          ],
+                      fontSize: 13, color: Color.fromRGBO(0, 0, 0, 0.2))),
+              const SizedBox(height: 5),
+              GestureDetector(
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SignupScreen()),
+                ),
+                child: const Text('Cadastre-se',
+                    style: TextStyle(
+                        fontSize: 13, color: Color.fromRGBO(19, 62, 135, 1))),
+              ),
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
-
+    );
+  }
 
   Widget _buildTextField(
       TextEditingController controller, String label, IconData icon,
