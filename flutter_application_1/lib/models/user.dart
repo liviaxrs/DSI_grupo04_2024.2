@@ -2,7 +2,7 @@ class UserModel {
   final String id;
   final String email;
   String nome;
-  final String nomeUsuario;
+  String nomeUsuario;
   String? fotoUrl;
 
   UserModel({

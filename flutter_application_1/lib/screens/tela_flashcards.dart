@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'tela_deck.dart';
 
 class flashcardScreen extends StatefulWidget {
@@ -11,7 +12,8 @@ class flashcardScreen extends StatefulWidget {
 
 class _FlashcardScreenState extends State<flashcardScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  List<String> decks = [];
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  List<Map<String, String>> decks = [];
   List<int> selectedDecks = [];
   bool isSelecting = false;
 
@@ -21,28 +23,39 @@ class _FlashcardScreenState extends State<flashcardScreen> {
     _loadDecks();
   }
 
-  // carregar decks do firestore
   void _loadDecks() async {
-    QuerySnapshot snapshot = await _firestore.collection('decks').get();
+    User? user = _auth.currentUser;
+    if (user == null) return;
+
+    QuerySnapshot snapshot = await _firestore
+        .collection('decks')
+        .where('userId', isEqualTo: user.uid)
+        .get();
+
     setState(() {
-      decks = snapshot.docs.map((doc) => doc['name'] as String).toList();
+      decks = snapshot.docs
+          .map((doc) => {'id': doc.id, 'name': doc['name'] as String})
+          .toList();
     });
   }
 
-  // incluir novo deck no fstore
   void _addDeck() async {
-    // int newDeckNumber = decks.length + 1;
-    String newDeckName = "Deck"; // $newDeckNumber
+    User? user = _auth.currentUser;
+    if (user == null) return;
 
-    await _firestore.collection('decks').add({
-      'name': newDeckName,
+    DocumentReference newDeckRef = _firestore.collection('decks').doc();
+
+    await newDeckRef.set({
+      'name': "Deck",
+      'userId': user.uid,
     });
 
-    _loadDecks(); 
+    _loadDecks();
   }
 
-  // selectbox pra deletar
   void _deleteSelectedDecks() async {
+    if (selectedDecks.isEmpty) return;
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -52,28 +65,19 @@ class _FlashcardScreenState extends State<flashcardScreen> {
           actions: <Widget>[
             TextButton(
               child: const Text("Cancelar"),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+              onPressed: () => Navigator.of(context).pop(),
             ),
             TextButton(
               child: const Text("Excluir"),
               onPressed: () async {
                 for (int index in selectedDecks) {
-                  String deckName = decks[index];
-                  QuerySnapshot snapshot = await _firestore
-                      .collection('decks')
-                      .where('name', isEqualTo: deckName)
-                      .get();
-                  for (var doc in snapshot.docs) {
-                    await doc.reference.delete();
-                  }
+                  await _firestore.collection('decks').doc(decks[index]['id']).delete();
                 }
                 setState(() {
                   selectedDecks.clear();
                   isSelecting = false;
                 });
-                _loadDecks(); 
+                _loadDecks();
                 Navigator.of(context).pop();
               },
             ),
@@ -87,9 +91,7 @@ class _FlashcardScreenState extends State<flashcardScreen> {
     setState(() {
       if (selectedDecks.contains(index)) {
         selectedDecks.remove(index);
-        if (selectedDecks.isEmpty) {
-          isSelecting = false;
-        }
+        if (selectedDecks.isEmpty) isSelecting = false;
       } else {
         selectedDecks.add(index);
       }
@@ -109,18 +111,18 @@ class _FlashcardScreenState extends State<flashcardScreen> {
         title: const Text(
           "Flashcards",
           style: TextStyle(
-            color: Colors.white, 
-            fontWeight: FontWeight.bold, 
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
           ),
         ),
-        centerTitle: true, 
-        backgroundColor: const Color.fromARGB(255, 19, 62, 135), 
+        centerTitle: true,
+        backgroundColor: const Color.fromARGB(255, 19, 62, 135),
         actions: [
           if (isSelecting)
             IconButton(
               icon: const Icon(Icons.delete),
               onPressed: _deleteSelectedDecks,
-              color: Colors.white, 
+              color: Colors.white,
             ),
         ],
       ),
@@ -129,30 +131,34 @@ class _FlashcardScreenState extends State<flashcardScreen> {
         itemBuilder: (context, index) {
           return GestureDetector(
             onLongPress: () {
-              if (!isSelecting) {
-                _startSelectionMode();
-              }
+              if (!isSelecting) _startSelectionMode();
               _toggleSelection(index);
             },
-            onTap: () {
+            onTap: () async {
               if (isSelecting) {
                 _toggleSelection(index);
               } else {
-                Navigator.push(
+                bool? updated = await Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => DeckScreen(deckName: decks[index]),
+                    builder: (context) => DeckScreen(
+                      deckId: decks[index]['id']!,
+                      deckName: decks[index]['name']!,
+                    ),
                   ),
                 );
+                if (updated == true) {
+                  _loadDecks();
+                }
               }
             },
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200), 
+              duration: const Duration(milliseconds: 200),
               margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
               decoration: BoxDecoration(
                 color: selectedDecks.contains(index)
-                    ? Colors.grey[300] 
-                    : Colors.white, 
+                    ? Colors.grey[300]
+                    : Colors.white,
                 borderRadius: BorderRadius.circular(8),
                 boxShadow: [
                   BoxShadow(
@@ -163,7 +169,7 @@ class _FlashcardScreenState extends State<flashcardScreen> {
                 ],
               ),
               child: ListTile(
-                title: Text(decks[index]),
+                title: Text(decks[index]['name']!),
                 trailing: isSelecting
                     ? Checkbox(
                         value: selectedDecks.contains(index),
@@ -179,8 +185,8 @@ class _FlashcardScreenState extends State<flashcardScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _addDeck,
-        backgroundColor: const Color.fromARGB(255, 19, 62, 135), 
-        foregroundColor: Colors.white, 
+        backgroundColor: const Color.fromARGB(255, 19, 62, 135),
+        foregroundColor: Colors.white,
         child: const Icon(Icons.add),
       ),
     );

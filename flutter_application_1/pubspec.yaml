@@ -36,7 +36,13 @@ dependencies:
   percent_indicator: ^4.2.3
   flutter_localizations:
     sdk: flutter
+<<<<<<< HEAD
   fl_chart: ^0.70.2
+=======
+  fl_chart: ^0.66.2
+  image_picker: ^1.1.2
+  provider: ^6.1.2
+>>>>>>> 3d4bacfb7080762c85acaa70b5052df4feddeaee
 
 
 
