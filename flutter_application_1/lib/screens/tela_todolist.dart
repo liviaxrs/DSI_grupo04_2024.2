@@ -3,7 +3,7 @@ import 'package:date_picker_timeline/date_picker_timeline.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:proAluno/Widgets/addButton.dart';
-import 'package:proAluno/screens/tela_editarTask.dart';
+import 'package:proAluno/screens/tela_editartask.dart';
 import '../models/task.dart';
 
 
