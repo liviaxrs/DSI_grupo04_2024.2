@@ -46,7 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
           TodolistScreen(),
           PerfilScreen(),
           flashcardScreen(),
-          mapaScreen(), 
+          MapaScreen(),
         ],
       ),
       bottomNavigationBar: CustomBottomNavBar(
@@ -93,9 +93,7 @@ class CustomBottomNavBar extends StatelessWidget {
               icon: Icons.folder,
               text: 'Flashcard',
             ),
-            GButton(
-              icon: Icons.location_on,
-              text: 'Mapa')
+            GButton(icon: Icons.location_on, text: 'Mapa')
           ],
           selectedIndex: selectedIndex,
           onTabChange: onTabChange,
