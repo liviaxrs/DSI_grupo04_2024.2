@@ -179,7 +179,7 @@ class _DeckScreenState extends State<DeckScreen> {
                           style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 24, vertical: 12),
-                            backgroundColor: Colors.blue[900],
+                            backgroundColor: Color.fromARGB(255, 19, 62, 135),
                           ),
                           child: const Text("Começar a estudar!",
                               style: TextStyle(color: Colors.white)),

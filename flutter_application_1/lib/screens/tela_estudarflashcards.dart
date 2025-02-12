@@ -119,7 +119,7 @@ class _StudyFlashcardsScreenState extends State<StudyFlashcardsScreen> {
             height: 100,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: Colors.blue[300],
+              color: const Color.fromARGB(255, 78, 134, 187),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(
@@ -155,7 +155,10 @@ class _StudyFlashcardsScreenState extends State<StudyFlashcardsScreen> {
           // Botão para exibir resposta
           ElevatedButton(
             onPressed: _showAnswer,
-            child: const Text("Virar Card"),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Color.fromARGB(255, 19, 62, 135),
+            ),
+            child: const Text("Virar Card", style: TextStyle(color: Colors.white),),
           ),
 
           const SizedBox(height: 20),
