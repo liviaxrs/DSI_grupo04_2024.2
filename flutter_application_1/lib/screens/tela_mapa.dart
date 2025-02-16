@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'dart:developer' as developer;
-import 'autentificacao/ponto_mapa.dart';
+import '../models/mapa.dart';
+import 'locais_salvos_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class MapaScreen extends StatefulWidget {
-  const MapaScreen({super.key});
+  final LatLng? localSelecionado; // Parâmetro para receber as coordenadas
+
+  const MapaScreen({super.key, this.localSelecionado});
 
   @override
   MapaScreenState createState() => MapaScreenState();
@@ -17,21 +20,32 @@ class MapaScreen extends StatefulWidget {
 class MapaScreenState extends State<MapaScreen> {
   late GoogleMapController mapController;
   final Set<Marker> _markers = {};
+  final TextEditingController _pesquisaController = TextEditingController();
   final List<PontoMapa> _pontosMapa = [];
   final TextEditingController _tituloController = TextEditingController();
   final TextEditingController _descricaoController = TextEditingController();
-  final TextEditingController _pesquisaController = TextEditingController();
 
   static LatLng _currentLocation = const LatLng(-23.550520, -46.633308);
   LatLng? _primeiroToqueLocation;
   Marker? _marcadorTemporario;
+  String? _userId;
 
   @override
   void initState() {
     super.initState();
     _getCurrentLocation();
+    _getUserIdAndLoadPoints();
+  }
+
+  // Método para obter o userId e carregar os pontos
+  Future<void> _getUserIdAndLoadPoints() async {
     final user = FirebaseAuth.instance.currentUser;
-    if (user != null) _carregarPontosMapa(user.uid);
+    if (user != null) {
+      setState(() {
+        _userId = user.uid;
+      });
+      await _carregarPontosMapa();
+    }
   }
 
   void _onMapCreated(GoogleMapController controller) {
@@ -65,66 +79,45 @@ class MapaScreenState extends State<MapaScreen> {
     mapController.animateCamera(CameraUpdate.newLatLng(_currentLocation));
   }
 
-  Future<void> _carregarPontosMapa(String userId) async {
-    final pontos = await recuperarPontosMapa(userId);
+  // Método para carregar os pontos salvos do Firestore
+  Future<void> _carregarPontosMapa() async {
+    if (_userId == null) return;
+
+    final querySnapshot = await FirebaseFirestore.instance
+        .collection('mapa')
+        .where('userId', isEqualTo: _userId)
+        .get();
+
     setState(() {
-      _pontosMapa.clear(); // Limpa a lista de pontos existentes
-      _markers.clear(); // Limpa os marcadores existentes
-      _pontosMapa.addAll(pontos); // Adiciona os novos pontos
-      _markers.addAll(pontos
-          .map((ponto) => Marker(
-                markerId: MarkerId(ponto.id),
-                position: ponto.localizacao,
-                infoWindow:
-                    InfoWindow(title: ponto.titulo, snippet: ponto.descricao),
-              ))
+      _pontosMapa.clear();
+      _pontosMapa.addAll(querySnapshot.docs
+          .map((doc) => PontoMapa.fromJson(doc.id, doc.data()))
           .toList());
     });
   }
 
-  Future<List<PontoMapa>> recuperarPontosMapa(String userId) async {
-    final querySnapshot = await FirebaseFirestore.instance
-        .collection('mapa')
-        .where('userId', isEqualTo: userId)
-        .get();
-    return querySnapshot.docs
-        .map((doc) => PontoMapa.fromMap(doc.data(), doc.id))
-        .toList();
-  }
-
+  // Método para salvar um ponto no Firestore
   Future<void> salvarPontoMapa(PontoMapa ponto) async {
-    await FirebaseFirestore.instance.collection('mapa').add(ponto.toMap());
+    await FirebaseFirestore.instance.collection('mapa').add(ponto.toJson());
   }
 
+  // Método para adicionar um ponto ao mapa
   void _adicionarPontoMapa(LatLng localizacao) async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
+    if (_userId == null) return;
 
     final novoPonto = PontoMapa(
-      id: UniqueKey().toString(), // Add a unique id
-      userId: user.uid,
+      id: UniqueKey().toString(),
       titulo: _tituloController.text,
       descricao: _descricaoController.text,
       localizacao: localizacao,
+      userId: _userId!,
     );
 
     await salvarPontoMapa(novoPonto);
-    _carregarPontosMapa(user.uid); // Recarrega os pontos após salvar
+    _carregarPontosMapa();
   }
 
-  Future<void> _deletarPontoMapa(String pontoId) async {
-    try {
-      await FirebaseFirestore.instance.collection('mapa').doc(pontoId).delete();
-
-      setState(() {
-        _pontosMapa.removeWhere((ponto) => ponto.id == pontoId);
-        _markers.removeWhere((marker) => marker.markerId.value == pontoId);
-      });
-    } catch (e) {
-      developer.log('Erro ao deletar ponto: $e');
-    }
-  }
-
+  // Método para pesquisar um local
   Future<void> _pesquisarLocal(String nomeLocal) async {
     try {
       List<Location> locations = await locationFromAddress(nomeLocal);
@@ -146,6 +139,7 @@ class MapaScreenState extends State<MapaScreen> {
     }
   }
 
+  // Método para lidar com toques no mapa
   void _onMapTap(LatLng localizacao) {
     if (_primeiroToqueLocation == null) {
       setState(() {
@@ -171,6 +165,7 @@ class MapaScreenState extends State<MapaScreen> {
     }
   }
 
+  // Método para calcular a distância entre dois pontos
   double _calcularDistancia(LatLng ponto1, LatLng ponto2) {
     return Geolocator.distanceBetween(
       ponto1.latitude,
@@ -180,6 +175,7 @@ class MapaScreenState extends State<MapaScreen> {
     );
   }
 
+  // Método para mostrar o diálogo de confirmação
   void _mostrarDialogoConfirmacao(LatLng localizacao) {
     showDialog(
       context: context,
@@ -242,6 +238,27 @@ class MapaScreenState extends State<MapaScreen> {
             ),
           ),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.list, color: Colors.white),
+            onPressed: () async {
+              // Navegar para a tela LocaisSalvosScreen e aguardar o retorno
+              final coordenadas = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      LocaisSalvosScreen(pontosMapa: _pontosMapa),
+                ),
+              );
+
+              // Se houver coordenadas retornadas, centralize o mapa nelas
+              if (coordenadas != null) {
+                mapController
+                    .animateCamera(CameraUpdate.newLatLng(coordenadas));
+              }
+            },
+          ),
+        ],
       ),
       body: Stack(
         children: [
@@ -260,13 +277,6 @@ class MapaScreenState extends State<MapaScreen> {
             right: 10,
             child: _buildSearchBar(),
           ),
-          if (_pontosMapa.isNotEmpty)
-            Positioned(
-              bottom: 20,
-              left: 20,
-              right: 20,
-              child: _buildPontosMapaList(),
-            ),
         ],
       ),
     );
@@ -306,49 +316,6 @@ class MapaScreenState extends State<MapaScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildPontosMapaList() {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 5,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: _pontosMapa
-            .map((ponto) => ListTile(
-                  title: Text(
-                    ponto.titulo,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF133E87),
-                    ),
-                  ),
-                  subtitle: Text(
-                    ponto.descricao,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Colors.black54,
-                    ),
-                  ),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete, color: Color(0xFF133E87)),
-                    onPressed: () => _deletarPontoMapa(ponto.id),
-                  ),
-                ))
-            .toList(),
       ),
     );
   }
