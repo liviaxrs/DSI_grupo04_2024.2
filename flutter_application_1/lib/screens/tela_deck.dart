@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:proAluno/screens/tela_estudarflashcards.dart';
 import 'tela_addcard.dart';
+import 'tela_editarcard.dart'; // Importe a tela de edição
 
 class DeckScreen extends StatefulWidget {
   final String deckId;
@@ -40,6 +41,7 @@ class _DeckScreenState extends State<DeckScreen> {
     setState(() {
       cards = cardsSnapshot.docs
           .map((doc) => {
+                'id': doc.id,
                 'text': doc['text'] as String,
                 'answer': doc['answer'] as String,
               })
@@ -56,6 +58,24 @@ class _DeckScreenState extends State<DeckScreen> {
     );
 
     if (cardAdded == true) {
+      _loadCards();
+    }
+  }
+
+  void _navigateToEditCard(String cardId, String currentText, String currentAnswer) async {
+    bool? cardEdited = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditCardScreen(
+          deckId: widget.deckId,
+          cardId: cardId,
+          initialText: currentText,
+          initialAnswer: currentAnswer,
+        ),
+      ),
+    );
+
+    if (cardEdited == true) {
       _loadCards();
     }
   }
@@ -103,7 +123,8 @@ class _DeckScreenState extends State<DeckScreen> {
       child: Scaffold(
         backgroundColor: const Color.fromARGB(255, 232, 230, 230),
         appBar: AppBar(
-          title: Text(deckName,
+          title: Text(
+            deckName,
             style: const TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.bold,
@@ -174,7 +195,12 @@ class _DeckScreenState extends State<DeckScreen> {
                         const SizedBox(height: 16),
                         ElevatedButton(
                           onPressed: () {
-                            Navigator.push(context, MaterialPageRoute(builder: (context) => StudyFlashcardsScreen(deckId: widget.deckId)));
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => StudyFlashcardsScreen(deckId: widget.deckId),
+                              ),
+                            );
                           },
                           style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(
@@ -222,7 +248,11 @@ class _DeckScreenState extends State<DeckScreen> {
                                           subtitle: Text(cards[index]['answer'] ?? ""),
                                           trailing: IconButton(
                                             icon: const Icon(Icons.edit),
-                                            onPressed: () {},
+                                            onPressed: () => _navigateToEditCard(
+                                              cards[index]['id']!,
+                                              cards[index]['text']!,
+                                              cards[index]['answer']!,
+                                            ),
                                           ),
                                         ),
                                       );
