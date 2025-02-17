@@ -59,14 +59,12 @@ class _FlashcardScreenState extends State<flashcardScreen> {
     User? user = _auth.currentUser;
     if (user == null) return;
 
-    // Determinar o próximo número a ser usado no nome do deck
     int nextNumber = 1;
 
-    // Encontrar o maior número existente
     for (var deck in decks) {
       final name = deck['name']!;
       if (name.startsWith("Deck ")) {
-        final numberPart = name.substring(5); // Pega o número após "Deck "
+        final numberPart = name.substring(5); 
         final number = int.tryParse(numberPart);
         if (number != null && number >= nextNumber) {
           nextNumber = number + 1;
@@ -74,14 +72,13 @@ class _FlashcardScreenState extends State<flashcardScreen> {
       }
     }
 
-    // Criar o novo deck com o nome "Deck X"
     DocumentReference newDeckRef = _firestore.collection('decks').doc();
     await newDeckRef.set({
       'name': "Deck $nextNumber",
       'userId': user.uid,
     });
 
-    _loadDecks(); // Recarregar os decks para atualização
+    _loadDecks(); 
   }
 
   void _deleteSelectedDecks() async {
