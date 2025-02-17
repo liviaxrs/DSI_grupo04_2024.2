@@ -62,6 +62,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
         }).toList();
         _taskCount = _completedTasks.length;
       });
+      await _updateMetaWithCompletedTasks();
     }
   }
 
@@ -86,12 +87,52 @@ class _PerfilScreenState extends State<PerfilScreen> {
     }
   }
 
-    Future<void> _fetchTasksForLastWeek() async {
+  Future<void> _updateMetaWithCompletedTasks() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final today = DateTime.now();
+    final formattedDate =
+        '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+
+    // Buscar a meta do dia
+    final metaQuery = await FirebaseFirestore.instance
+        .collection('metas')
+        .where('userId', isEqualTo: user.uid)
+        .where('date', isEqualTo: formattedDate)
+        .get();
+
+    if (metaQuery.docs.isEmpty) return;
+
+    final metaDoc = metaQuery.docs.first;
+    final metaData = metaDoc.data();
+    List<String> currentTaskIds = List<String>.from(metaData['taskIds'] ?? []);
+
+    // Buscar tarefas completadas do dia
+    final tasksQuery = await FirebaseFirestore.instance
+        .collection('tasks')
+        .where('userId', isEqualTo: user.uid)
+        .where('isComplete', isEqualTo: true)
+        .where('date', isEqualTo: formattedDate)
+        .get();
+
+    List<String> completedTaskIds = tasksQuery.docs.map((doc) => doc.id).toList();
+
+    // Atualizar apenas se houver novas tasks completadas
+    final newTaskIds = completedTaskIds.toSet().difference(currentTaskIds.toSet());
+    if (newTaskIds.isNotEmpty) {
+      await FirebaseFirestore.instance.collection('metas').doc(metaDoc.id).update({
+        'taskIds': FieldValue.arrayUnion(completedTaskIds),
+      });
+    }
+  }
+
+
+  Future<void> _fetchTasksForLastWeek() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
     final now = DateTime.now();
-    final lastWeek = now.subtract(const Duration(days: 6));
     final tasksMap = <String, int>{};
 
     for (int i = 0; i < 7; i++) {
@@ -118,6 +159,12 @@ class _PerfilScreenState extends State<PerfilScreen> {
     });
   }
 
+  // Função para sair da conta
+  Future<void> _sairDaConta() async {
+    await FirebaseAuth.instance.signOut(); // Faz logout do Firebase
+    Navigator.pushReplacementNamed(context, '/tela_login'); // Redireciona para a tela de login
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -128,17 +175,25 @@ class _PerfilScreenState extends State<PerfilScreen> {
           style: TextStyle(color: Colors.white),
         ),
         centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.notifications, color: Colors.white), // Ícone de sino
+          onPressed: () {
+            Navigator.pushNamed(context, '/notificacoes'); // Navega para a tela de notificações
+          },
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.edit, color: Colors.white), 
+            icon: const Icon(Icons.settings, color: Colors.white),
             onPressed: () async {
-              final atualizado = await Navigator.pushNamed(context, '/tela_edicao_perfil');
-              if (atualizado == true) {
+                await Navigator.pushNamed(context, '/tela_edicao_perfil');
                 _fetchUserData();
                 _fetchMeta();
                 _fetchTasksForLastWeek();
-              }
             },
+          ),
+          IconButton(
+            icon: const Icon(Icons.exit_to_app, color: Colors.white),
+            onPressed: _sairDaConta,
           ),
         ],
       ),
@@ -150,67 +205,140 @@ class _PerfilScreenState extends State<PerfilScreen> {
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center, // Centraliza tudo na coluna principal
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     if (_user!.fotoUrl != null)
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          ClipOval(
-                            child: Image.network(
-                              _user!.fotoUrl!,
-                              width: 100, // Define o tamanho da imagem
-                              height: 100,
-                              fit: BoxFit.cover, // Garante que a imagem preencha o círculo corretamente
-                            ),
+                          CircleAvatar(
+                            radius: 60,
+                            backgroundImage: _user!.fotoUrl != null
+                                ? NetworkImage(_user!.fotoUrl!)
+                                : const AssetImage("assets/images/perfil_padrao.png") 
+                                    as ImageProvider,
                           ),
-                          const SizedBox(height: 10), // Espaço entre a imagem e o nome
+                          const SizedBox(height: 10),
                           Text(
                             _user!.nome,
-                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                            style: const TextStyle(color: Color(0xFF133E87),fontSize: 18, fontWeight: FontWeight.bold),
                             textAlign: TextAlign.center,
                           ),
                           Text(
-                            '@${_user!.nomeUsuario}', // Nome de usuário no formato rede social
-                            style: const TextStyle(fontSize: 16, color: Colors.grey),
+                            '@${_user!.nomeUsuario}',
+                            style: const TextStyle(fontSize: 18, color: Colors.grey),
                             textAlign: TextAlign.center,
                           ),
+                          const SizedBox(height: 20),
+                          if (_meta != null)
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'Meta de tarefas do dia: ${_meta!.taskGoal}',
+                                    style: TextStyle(
+                                    color: Color(0xFF133E87),
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                Text(
+                                  'Você concluiu $_taskCount de ${_meta!.taskGoal} tarefas.',
+                                    style: TextStyle(
+                                      color: Color(0xFF133E87),
+                                      fontSize: 12,
+                                  ),
+                                ),
+                                const SizedBox(height: 15),
+                                Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    SizedBox(
+                                      width: 80,
+                                      height: 80,
+                                      child: CircularProgressIndicator(
+                                        value: (_meta!.taskGoal > 0)
+                                            ? (_taskCount / _meta!.taskGoal).clamp(0.0, 1.0)
+                                            : 0.0,
+                                        backgroundColor: Colors.grey[300],
+                                        color: Colors.blue,
+                                        strokeWidth: 8,
+                                      ),
+                                    ),
+                                    Text(
+                                      '${((_taskCount / _meta!.taskGoal) * 100).clamp(0, 100).toStringAsFixed(1)}%',
+                                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                         ],
                       ),
                     const SizedBox(height: 20),
-                    if (_meta != null)
+                    if (_tasksPerDay.isNotEmpty)
                       Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Text('Meta do dia: ${_meta!.taskGoal} tarefas'),
-                          const SizedBox(height: 10),
-                          Text('Você concluiu $_taskCount de ${_meta!.taskGoal} tarefas.'),
-                          const SizedBox(height: 10),
-                          Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              SizedBox(
-                                width: 80,
-                                height: 80,
-                                child: CircularProgressIndicator(
-                                  value: (_meta!.taskGoal > 0)
-                                      ? (_taskCount / _meta!.taskGoal).clamp(0.0, 1.0)
-                                      : 0.0,
-                                  backgroundColor: Colors.grey[300],
-                                  color: Colors.blue,
-                                  strokeWidth: 8,
+                          const Text(
+                            'Tarefas concluídas nos últimos 7 dias:',
+                            style: TextStyle(
+                              color: Color(0xFF133E87), // Azul
+                              fontWeight: FontWeight.bold, // Negrito
+                              fontSize: 16, // Ajuste de tamanho opcional
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          SizedBox(
+                            height: 200,
+                            child: BarChart(
+                              BarChartData(
+                                gridData: const FlGridData(show: false),
+                                borderData: FlBorderData(show: false),
+                                titlesData: FlTitlesData(
+                                  leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                                  bottomTitles: AxisTitles(
+                                    sideTitles: SideTitles(
+                                      showTitles: true,
+                                      getTitlesWidget: (value, meta) {
+                                        final dateKey = _tasksPerDay.keys.toList()[value.toInt()];
+                                        return Text(
+                                          '${dateKey.split('-')[2]}/${dateKey.split('-')[1]}',
+                                          style: const TextStyle(fontSize: 12),
+                                        );
+                                      },
+                                    ),
+                                  ),
                                 ),
+                                barGroups: _tasksPerDay.entries.map((entry) {
+                                  return BarChartGroupData(
+                                    x: _tasksPerDay.keys.toList().indexOf(entry.key),
+                                    barRods: [
+                                      BarChartRodData(
+                                        toY: entry.value.toDouble(),
+                                        color: Colors.blue,
+                                        width: 16,
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                    ],
+                                  );
+                                }).toList(),
                               ),
-                              Text(
-                                '${((_taskCount / _meta!.taskGoal) * 100).clamp(0, 100).toStringAsFixed(1)}%',
-                                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                              ),
-                            ],
+                            ),
                           ),
                         ],
                       ),
                     const SizedBox(height: 20),
-                    if (_meta != null) const Text('Tarefas Concluídas Hoje:'),
+                    if (_meta != null) const Text(
+                      'Tarefas Concluídas Hoje:',
+                    style: TextStyle(
+                              color: Color(0xFF133E87),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
                     if (_completedTasks.isEmpty)
                       const Text('Nenhuma tarefa concluída hoje.')
                     else
@@ -230,58 +358,11 @@ class _PerfilScreenState extends State<PerfilScreen> {
                           );
                         },
                       ),
-                    const SizedBox(height: 20),
-                    const Text('Tarefas concluídas nos últimos 7 dias:'),
-                    const SizedBox(height: 20),
-                    if (_tasksPerDay.isEmpty)
-                      const Text('Nenhuma tarefa concluída nos últimos 7 dias.')
-                    else
-                      SizedBox(
-                        height: 200,
-                        child: BarChart(
-                          BarChartData(
-                            gridData: const FlGridData(show: false),
-                            borderData: FlBorderData(show: false),
-                            titlesData: FlTitlesData(
-                              leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                              topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                              rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                              bottomTitles: AxisTitles(
-                                sideTitles: SideTitles(
-                                  showTitles: true,
-                                  getTitlesWidget: (value, meta) {
-                                    final dateKey = _tasksPerDay.keys.toList()[value.toInt()];
-                                    return Text(
-                                      '${dateKey.split('-')[2]}/${dateKey.split('-')[1]}',
-                                      style: const TextStyle(fontSize: 12),
-                                    );
-                                  },
-                                ),
-                              ),
-                            ),
-                            barGroups: _tasksPerDay.entries.isEmpty
-                                ? []
-                                : _tasksPerDay.entries.map((entry) {
-                                    return BarChartGroupData(
-                                      x: _tasksPerDay.keys.toList().indexOf(entry.key),
-                                      barRods: [
-                                        BarChartRodData(
-                                          toY: entry.value.toDouble(),
-                                          color: Colors.blue,
-                                          width: 16,
-                                          borderRadius: BorderRadius.circular(4),
-                                        ),
-                                      ],
-                                    );
-                                  }).toList(),
-                          ),
-                        ),
-                      ),
                   ],
                 ),
               ),
             ),
-        ),
-      );
-    }
+      ),
+    );
   }
+}

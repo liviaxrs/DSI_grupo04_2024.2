@@ -11,6 +11,7 @@ import 'screens/tela_mapa.dart';
 import 'screens/tela_esqueci_senha.dart';
 import 'screens/notificacoes.dart';
 import 'screens/tela_edicao_perfil.dart';
+import 'screens/tela_historicometas';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -43,6 +44,7 @@ class MyApp extends StatelessWidget {
         "/tela_esqueci_senha": (context) => const TelaEsqueciSenha(),
         "/notificacoes": (context) => const NotificacoesScreen(),
         "/tela_edicao_perfil": (context) => const EdicaoPerfil(),
+        "/tela_historicometas": (context) => const HistoricoMetasScreen(),
       },
     );
   }
