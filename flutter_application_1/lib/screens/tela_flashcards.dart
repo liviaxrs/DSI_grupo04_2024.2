@@ -36,21 +36,49 @@ class _FlashcardScreenState extends State<flashcardScreen> {
       decks = snapshot.docs
           .map((doc) => {'id': doc.id, 'name': doc['name'] as String})
           .toList();
+
+      // Ordenar os decks por número extraído do nome
+      decks.sort((a, b) {
+        final regex = RegExp(r"Deck (\d+)");
+        final matchA = regex.firstMatch(a['name']!);
+        final matchB = regex.firstMatch(b['name']!);
+
+        if (matchA != null && matchB != null) {
+          int numA = int.parse(matchA.group(1)!);
+          int numB = int.parse(matchB.group(1)!);
+          return numA.compareTo(numB);
+        }
+
+        return a['name']!.compareTo(b['name']!); // Caso padrão, ordenar por nome
+      });
     });
   }
+
 
   void _addDeck() async {
     User? user = _auth.currentUser;
     if (user == null) return;
 
-    DocumentReference newDeckRef = _firestore.collection('decks').doc();
+    int nextNumber = 1;
 
+    for (var deck in decks) {
+      final name = deck['name']!;
+      if (name.startsWith("Deck ")) {
+        final numberPart = name.substring(5); 
+        final number = int.tryParse(numberPart);
+        if (number != null && number >= nextNumber) {
+          nextNumber = number + 1;
+        }
+      }
+    }
+
+    DocumentReference newDeckRef = _firestore.collection('decks').doc();
     await newDeckRef.set({
-      'name': "Deck",
+      'name': "Deck $nextNumber",
       'userId': user.uid,
     });
 
-    _loadDecks();
+    _loadDecks(); 
   }
 
   void _deleteSelectedDecks() async {
@@ -112,7 +140,7 @@ class _FlashcardScreenState extends State<flashcardScreen> {
         title: const Text(
           "Flashcards",
           style: TextStyle(
-            color:  Colors.white,
+            color: Colors.white,
             fontWeight: FontWeight.bold,
           ),
         ),

@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:proAluno/screens/tela_estudarflashcards.dart';
 import 'tela_addcard.dart';
-import 'tela_editarcard.dart'; // Importe a tela de edição
+import 'tela_editarcard.dart'; 
 
 class DeckScreen extends StatefulWidget {
   final String deckId;
