@@ -9,9 +9,8 @@ import 'screens/tela_perfil.dart';
 import 'screens/tela_flashcards.dart';
 import 'screens/tela_mapa.dart';
 import 'screens/tela_esqueci_senha.dart';
-import 'screens/notificacoes.dart';
 import 'screens/tela_edicao_perfil.dart';
-import 'screens/tela_historicometas';
+import 'screens/tela_historicometas.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,7 +41,6 @@ class MyApp extends StatelessWidget {
         "/tela_flashcards": (context) => const flashcardScreen(),
         "/tela_mapa": (context) => MapaScreen(),
         "/tela_esqueci_senha": (context) => const TelaEsqueciSenha(),
-        "/notificacoes": (context) => const NotificacoesScreen(),
         "/tela_edicao_perfil": (context) => const EdicaoPerfil(),
         "/tela_historicometas": (context) => const HistoricoMetasScreen(),
       },

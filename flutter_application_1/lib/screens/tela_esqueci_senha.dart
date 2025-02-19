@@ -55,6 +55,7 @@ class _TelaEsqueciSenhaState extends State<TelaEsqueciSenha> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color.fromARGB(255, 232, 230, 230),
       appBar: AppBar(
         title: const Text(
           'Recuperar Senha',

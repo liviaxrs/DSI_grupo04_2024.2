@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:proAluno/screens/tela_historicometas';
+import 'package:proAluno/screens/tela_historicometas.dart';
 import '../models/user.dart';
 
 class EdicaoPerfil extends StatefulWidget {
@@ -247,6 +247,7 @@ class _EdicaoPerfilState extends State<EdicaoPerfil> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color.fromARGB(255, 232, 230, 230),
       appBar: AppBar(
         title: const Text('Editar Perfil'),
         backgroundColor: const Color(0xFF133E87),
@@ -268,33 +269,63 @@ class _EdicaoPerfilState extends State<EdicaoPerfil> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Center(  // Centraliza todo o conteúdo
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,  // Centraliza verticalmente
-            crossAxisAlignment: CrossAxisAlignment.center,  // Centraliza horizontalmente
-            children: [
-              // Título para a seção de informações do perfil
-              Text(
-                'Informações do Perfil',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFF133E87),
+        child: SingleChildScrollView(
+          child: Center(  // Centraliza todo o conteúdo
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,  // Centraliza verticalmente
+              crossAxisAlignment: CrossAxisAlignment.center,  // Centraliza horizontalmente
+              children: [
+                // Título para a seção de informações do perfil
+                Text(
+                  'Informações do Perfil',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF133E87),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 20),
-              Form(
-                key: _formKey,
-                child: Column(
+                const SizedBox(height: 20),
+                Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      _buildTextField(_nomeController, 'Nome', Icons.person),
+                      const SizedBox(height: 15),
+                      _buildTextField(_nomeUsuarioController, 'Nome de Usuário', Icons.alternate_email),
+                      const SizedBox(height: 15),
+                      _buildTextField(_fotoUrlController, 'URL da Foto', Icons.image),
+                      const SizedBox(height: 20),
+                      ElevatedButton(
+                        onPressed: _updateUserData,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF133E87),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                        ),
+                        child: const Text('Salvar', style: TextStyle(color: Colors.white)),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 40),
+                // Título para a seção de metas do dia
+                Text(
+                  'Meta do Dia',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF133E87),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Column(
                   children: [
-                    _buildTextField(_nomeController, 'Nome', Icons.person),
+                    _buildTextField(_metaController, 'Meta de Tarefas', Icons.flag),
                     const SizedBox(height: 15),
-                    _buildTextField(_nomeUsuarioController, 'Nome de Usuário', Icons.alternate_email),
-                    const SizedBox(height: 15),
-                    _buildTextField(_fotoUrlController, 'URL da Foto', Icons.image),
-                    const SizedBox(height: 20),
                     ElevatedButton(
-                      onPressed: _updateUserData,
+                      onPressed: _updateMeta,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF133E87),
                         shape: RoundedRectangleBorder(
@@ -302,56 +333,28 @@ class _EdicaoPerfilState extends State<EdicaoPerfil> {
                         ),
                         padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
                       ),
-                      child: const Text('Salvar', style: TextStyle(color: Colors.white)),
+                      child: const Text('Salvar Meta', style: TextStyle(color: Colors.white)),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 40),
-              // Título para a seção de metas do dia
-              Text(
-                'Meta do Dia',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFF133E87),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Column(
-                children: [
-                  _buildTextField(_metaController, 'Meta de Tarefas', Icons.flag),
-                  const SizedBox(height: 15),
-                  ElevatedButton(
-                    onPressed: _updateMeta,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF133E87),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                const SizedBox(height: 40),
+                // Botão para excluir a conta
+                ElevatedButton(
+                  onPressed: _confirmarExclusaoConta,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
                     ),
-                    child: const Text('Salvar Meta', style: TextStyle(color: Colors.white)),
+                    padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
                   ),
-                ],
-              ),
-              const SizedBox(height: 40),
-              // Botão para excluir a conta
-              ElevatedButton(
-                onPressed: _confirmarExclusaoConta,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
+                  child: const Text(
+                    'Excluir Conta',
+                    style: TextStyle(color: Colors.white),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
                 ),
-                child: const Text(
-                  'Excluir Conta',
-                  style: TextStyle(color: Colors.white),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

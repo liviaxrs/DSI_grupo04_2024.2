@@ -37,6 +37,10 @@ class _HistoricoMetasScreenState extends State<HistoricoMetasScreen> {
     }
 
     final snapshot = await query.get();
+
+    // Evita chamar setState() se o widget já foi descartado
+    if (!mounted) return;
+
     setState(() {
       _metas = snapshot.docs
           .map((doc) => Meta.fromJson(doc.id, doc.data() as Map<String, dynamic>))
