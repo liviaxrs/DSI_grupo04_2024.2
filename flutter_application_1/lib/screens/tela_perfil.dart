@@ -45,7 +45,6 @@ class _PerfilScreenState extends State<PerfilScreen> {
     }
   }
 
-
   Future<void> _fetchCompletedTasks() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
@@ -131,7 +130,6 @@ class _PerfilScreenState extends State<PerfilScreen> {
     }
   }
 
-
   Future<void> _fetchTasksForLastWeek() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
@@ -163,9 +161,8 @@ class _PerfilScreenState extends State<PerfilScreen> {
     });
   }
 
-  // Função para sair da conta
   Future<void> _sairDaConta() async {
-    await FirebaseAuth.instance.signOut(); // Faz logout do Firebase
+    await FirebaseAuth.instance.signOut();
     Navigator.pushReplacementNamed(context, '/tela_login'); // Redireciona para a tela de login
   }
 
@@ -195,7 +192,8 @@ class _PerfilScreenState extends State<PerfilScreen> {
           ),
         ],
       ),
-      body: Container(
+      body: SizedBox.expand(
+        child: Container(
         color: const Color.fromARGB(255, 232, 230, 230),
         child: _user == null
           ? const Center(child: CircularProgressIndicator())
@@ -274,58 +272,65 @@ class _PerfilScreenState extends State<PerfilScreen> {
                         ],
                       ),
                       const SizedBox(height: 20),
-                      if (_tasksPerDay.isNotEmpty)
-                        Column(
-                          children: [
-                            const Text(
-                              'Tarefas concluídas nos últimos 7 dias:',
-                              style: TextStyle(
-                                color: Color(0xFF133E87), // Azul
-                                fontWeight: FontWeight.bold, // Negrito
-                                fontSize: 16, // Ajuste de tamanho opcional
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                            SizedBox(
-                              height: 200,
-                              child: BarChart(
-                                BarChartData(
-                                  gridData: const FlGridData(show: false),
-                                  borderData: FlBorderData(show: false),
-                                  titlesData: FlTitlesData(
-                                    leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                                    bottomTitles: AxisTitles(
-                                      sideTitles: SideTitles(
-                                        showTitles: true,
-                                        getTitlesWidget: (value, meta) {
-                                          final dateKey = _tasksPerDay.keys.toList()[value.toInt()];
-                                          return Text(
-                                            '${dateKey.split('-')[2]}/${dateKey.split('-')[1]}',
-                                            style: const TextStyle(fontSize: 12),
-                                          );
-                                        },
-                                      ),
-                                    ),
-                                  ),
-                                  barGroups: _tasksPerDay.entries.map((entry) {
-                                    return BarChartGroupData(
-                                      x: _tasksPerDay.keys.toList().indexOf(entry.key),
-                                      barRods: [
-                                        BarChartRodData(
-                                          toY: entry.value.toDouble(),
-                                          color: Colors.blue,
-                                          width: 16,
-                                          borderRadius: BorderRadius.circular(4),
-                                        ),
-                                      ],
-                                    );
-                                  }).toList(),
+                      _tasksPerDay.values.any((count) => count > 0)
+                        ? Column(
+                            children: [
+                              const Text(
+                                'Tarefas concluídas nos últimos 7 dias:',
+                                style: TextStyle(
+                                  color: Color(0xFF133E87),
+                                  fontWeight: FontWeight.bold, 
+                                  fontSize: 16, 
                                 ),
                               ),
-                            ),
-                          ],
+                              const SizedBox(height: 20),
+                              SizedBox(
+                                height: 200,
+                                child: BarChart(
+                                  BarChartData(
+                                    gridData: const FlGridData(show: false),
+                                    borderData: FlBorderData(show: false),
+                                    titlesData: FlTitlesData(
+                                      leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                                      topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                                      rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                                      bottomTitles: AxisTitles(
+                                        sideTitles: SideTitles(
+                                          showTitles: true,
+                                          getTitlesWidget: (value, meta) {
+                                            final dateKey = _tasksPerDay.keys.toList()[value.toInt()];
+                                            return Text(
+                                              '${dateKey.split('-')[2]}/${dateKey.split('-')[1]}',
+                                              style: const TextStyle(fontSize: 12),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                    barGroups: _tasksPerDay.entries.map((entry) {
+                                      return BarChartGroupData(
+                                        x: _tasksPerDay.keys.toList().indexOf(entry.key),
+                                        barRods: [
+                                          BarChartRodData(
+                                            toY: entry.value.toDouble(),
+                                            color: Colors.blue,
+                                            width: 16,
+                                            borderRadius: BorderRadius.circular(4),
+                                          ),
+                                        ],
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          )
+                        : const Text(
+                          'Nenhuma tarefa completada nos últimos 7 dias',
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontSize: 16,
+                          ),
                         ),
                     const SizedBox(height: 20),
                     const Text(
@@ -348,7 +353,13 @@ class _PerfilScreenState extends State<PerfilScreen> {
                           return Card(
                             margin: const EdgeInsets.symmetric(vertical: 8),
                             child: ListTile(
-                              title: Text(task.title),
+                              title: Text(
+                                task.title,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF133E87),
+                                ),
+                              ),
                               subtitle: Text(task.description),
                               trailing: Text(task.hour),
                             ),
@@ -359,6 +370,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
                 ),
               ),
             ),
+        ),
       ),
     );
   }

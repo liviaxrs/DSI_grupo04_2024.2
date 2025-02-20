@@ -14,11 +14,25 @@ class HistoricoMetasScreen extends StatefulWidget {
 class _HistoricoMetasScreenState extends State<HistoricoMetasScreen> {
   final TextEditingController _dataController = TextEditingController();
   List<Meta> _metas = [];
+  String? _selectedMonth;
+  String? _selectedYear;
+  bool _bateuMetaFilter = false;
+
+  final List<String> _months = [
+    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+  ];
+  final List<String> _years = ['2023', '2024', '2025', '2026', '2027', '2028', '2029', '2030'];
 
   @override
   void initState() {
     super.initState();
     _buscarMetas();
+    
+    FirebaseFirestore.instance.collection('tasks').snapshots().listen((snapshot) {
+      _updateMetaWithCompletedTasks();
+      _buscarMetas();
+    });
   }
 
   Future<void> _buscarMetas({String? data}) async {
@@ -36,15 +50,60 @@ class _HistoricoMetasScreenState extends State<HistoricoMetasScreen> {
       query = query.where('date', isEqualTo: formattedDate);
     }
 
+    if (_selectedMonth != null && _selectedYear != null) {
+      final monthIndex = _months.indexOf(_selectedMonth!) + 1;
+      final startDate = '$_selectedYear-${monthIndex.toString().padLeft(2, '0')}-01';
+      final endDate = '$_selectedYear-${monthIndex.toString().padLeft(2, '0')}-31';
+      query = query.where('date', isGreaterThanOrEqualTo: startDate).where('date', isLessThanOrEqualTo: endDate);
+    }
+
     final snapshot = await query.get();
 
-    // Evita chamar setState() se o widget já foi descartado
     if (!mounted) return;
 
     setState(() {
       _metas = snapshot.docs
           .map((doc) => Meta.fromJson(doc.id, doc.data() as Map<String, dynamic>))
           .toList();
+
+      if (_bateuMetaFilter) {
+        _metas = _metas.where((meta) => meta.taskIds.length >= meta.taskGoal).toList();
+      }
+    });
+  }
+
+  Future<void> _updateMetaWithCompletedTasks() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final today = DateTime.now();
+    final formattedDate =
+        '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+
+    // Buscar a meta do dia
+    final metaQuery = await FirebaseFirestore.instance
+        .collection('metas')
+        .where('userId', isEqualTo: user.uid)
+        .where('date', isEqualTo: formattedDate)
+        .get();
+
+    if (metaQuery.docs.isEmpty) return;
+
+    final metaDoc = metaQuery.docs.first;
+
+    // Buscar tarefas completadas do dia
+    final tasksQuery = await FirebaseFirestore.instance
+        .collection('tasks')
+        .where('userId', isEqualTo: user.uid)
+        .where('isComplete', isEqualTo: true)
+        .where('date', isEqualTo: formattedDate)
+        .get();
+
+    List<String> completedTaskIds = tasksQuery.docs.map((doc) => doc.id).toList();
+
+    // Atualizar a meta com as tarefas completadas
+    await FirebaseFirestore.instance.collection('metas').doc(metaDoc.id).update({
+      'taskIds': completedTaskIds,
     });
   }
 
@@ -78,6 +137,62 @@ class _HistoricoMetasScreenState extends State<HistoricoMetasScreen> {
                   onPressed: () => _buscarMetas(data: _dataController.text),
                 ),
               ),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: DropdownButton<String>(
+                    value: _selectedMonth,
+                    hint: const Text('Mês'),
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        _selectedMonth = newValue;
+                      });
+                      _buscarMetas();
+                    },
+                    items: _months.map<DropdownMenuItem<String>>((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: DropdownButton<String>(
+                    value: _selectedYear,
+                    hint: const Text('Ano'),
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        _selectedYear = newValue;
+                      });
+                      _buscarMetas();
+                    },
+                    items: _years.map<DropdownMenuItem<String>>((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ],
+            ),
+            Row(
+              children: [
+                Checkbox(
+                  value: _bateuMetaFilter,
+                  onChanged: (bool? value) {
+                    setState(() {
+                      _bateuMetaFilter = value ?? false;
+                    });
+                    _buscarMetas();
+                  },
+                ),
+                const Text('Bateu Meta'),
+              ],
             ),
             const SizedBox(height: 20),
             Expanded(

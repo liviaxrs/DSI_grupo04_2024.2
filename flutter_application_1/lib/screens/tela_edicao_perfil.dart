@@ -157,12 +157,11 @@ class _EdicaoPerfilState extends State<EdicaoPerfil> {
     }
   }
 
-  // Função para excluir a conta
   Future<void> _excluirConta() async {
     User? usuarioAtual = FirebaseAuth.instance.currentUser;
     if (usuarioAtual != null) {
       try {
-        // Obtém uma referência ao Firestore
+        
         FirebaseFirestore firestore = FirebaseFirestore.instance;
 
         // Deleta todas as tarefas associadas ao usuário
@@ -175,7 +174,6 @@ class _EdicaoPerfilState extends State<EdicaoPerfil> {
           await firestore.collection('tasks').doc(doc.id).delete();
         }
 
-        // Deleta o usuário da coleção 'usuarios'
         await firestore.collection('usuarios').doc(usuarioAtual.uid).delete();
 
         // Exclui a conta do Authentication
@@ -184,7 +182,6 @@ class _EdicaoPerfilState extends State<EdicaoPerfil> {
         // Redireciona para a tela de login
         Navigator.pushReplacementNamed(context, '/tela_login');
       } catch (e) {
-        print("Erro ao excluir a conta: $e");
         // Exibe mensagem de erro
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text("Erro ao excluir a conta: $e"),
@@ -205,14 +202,14 @@ class _EdicaoPerfilState extends State<EdicaoPerfil> {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Fecha o pop-up
+                Navigator.of(context).pop();
               },
               child: const Text("Cancelar"),
             ),
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Fecha o pop-up
-                _excluirConta(); // Chama a função para excluir a conta
+                Navigator.of(context).pop();
+                _excluirConta();
               },
               child: const Text(
                 "Excluir",
@@ -270,12 +267,11 @@ class _EdicaoPerfilState extends State<EdicaoPerfil> {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: SingleChildScrollView(
-          child: Center(  // Centraliza todo o conteúdo
+          child: Center(  
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,  // Centraliza verticalmente
-              crossAxisAlignment: CrossAxisAlignment.center,  // Centraliza horizontalmente
+              mainAxisAlignment: MainAxisAlignment.center,  
+              crossAxisAlignment: CrossAxisAlignment.center, 
               children: [
-                // Título para a seção de informações do perfil
                 Text(
                   'Informações do Perfil',
                   style: TextStyle(
@@ -310,7 +306,6 @@ class _EdicaoPerfilState extends State<EdicaoPerfil> {
                   ),
                 ),
                 const SizedBox(height: 40),
-                // Título para a seção de metas do dia
                 Text(
                   'Meta do Dia',
                   style: TextStyle(
@@ -338,7 +333,6 @@ class _EdicaoPerfilState extends State<EdicaoPerfil> {
                   ],
                 ),
                 const SizedBox(height: 40),
-                // Botão para excluir a conta
                 ElevatedButton(
                   onPressed: _confirmarExclusaoConta,
                   style: ElevatedButton.styleFrom(
