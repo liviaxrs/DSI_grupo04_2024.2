@@ -5,8 +5,13 @@ import 'editar_local_screen.dart';
 
 class LocaisSalvosScreen extends StatefulWidget {
   final List<PontoMapa> pontosMapa;
+  final VoidCallback onPontoDeletado;
 
-  const LocaisSalvosScreen({super.key, required this.pontosMapa});
+  const LocaisSalvosScreen({
+    super.key,
+    required this.pontosMapa,
+    required this.onPontoDeletado,
+  });
 
   @override
   LocaisSalvosScreenState createState() => LocaisSalvosScreenState();
@@ -16,7 +21,6 @@ class LocaisSalvosScreenState extends State<LocaisSalvosScreen> {
   final TextEditingController _searchController = TextEditingController();
   List<PontoMapa> _filteredPontosMapa = [];
 
-// Adiciona listener para o campo de pesquisa
   @override
   void initState() {
     super.initState();
@@ -24,14 +28,12 @@ class LocaisSalvosScreenState extends State<LocaisSalvosScreen> {
     _searchController.addListener(_filterPontosMapa);
   }
 
-// Libera o controlador ao sair da tela
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
   }
 
-  // Método para filtrar os pontos com base no texto da pesquisa
   void _filterPontosMapa() {
     final query = _searchController.text.toLowerCase();
     setState(() {
@@ -47,7 +49,6 @@ class LocaisSalvosScreenState extends State<LocaisSalvosScreen> {
     try {
       await FirebaseFirestore.instance.collection('mapa').doc(pontoId).delete();
 
-      // Verifica se o widget ainda está montado antes de usar o BuildContext
       if (!mounted) return;
 
       setState(() {
@@ -55,7 +56,8 @@ class LocaisSalvosScreenState extends State<LocaisSalvosScreen> {
         _filteredPontosMapa.removeWhere((ponto) => ponto.id == pontoId);
       });
 
-      // Verifica se o widget ainda está montado antes de usar o BuildContext
+      widget.onPontoDeletado();
+
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -66,7 +68,6 @@ class LocaisSalvosScreenState extends State<LocaisSalvosScreen> {
         ),
       );
     } catch (e) {
-      // Verifica se o widget ainda está montado antes de usar o BuildContext
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -79,22 +80,18 @@ class LocaisSalvosScreenState extends State<LocaisSalvosScreen> {
     }
   }
 
-  // Método para navegar para a tela de edição
   Future<void> _navegarParaEditarPonto(PontoMapa ponto) async {
     final novoPonto = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => EditarLocalScreen(ponto: ponto),
+        builder: (context) => EditarLocalScreen(
+          ponto: ponto,
+          onPontoEditado: widget.onPontoDeletado,
+        ),
       ),
     );
 
     if (novoPonto != null) {
-      // Atualiza o ponto na lista e no Firestore
-      await FirebaseFirestore.instance
-          .collection('mapa')
-          .doc(ponto.id)
-          .update(novoPonto.toJson()); // Usar toJson em vez de toMap
-
       setState(() {
         final index = widget.pontosMapa.indexWhere((p) => p.id == ponto.id);
         if (index != -1) {
@@ -102,6 +99,8 @@ class LocaisSalvosScreenState extends State<LocaisSalvosScreen> {
           _filterPontosMapa(); // Atualiza a lista filtrada após a edição
         }
       });
+
+      widget.onPontoDeletado();
     }
   }
 
@@ -125,13 +124,12 @@ class LocaisSalvosScreenState extends State<LocaisSalvosScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
-            Navigator.pop(context); // Volta para a tela anterior
+            Navigator.pop(context);
           },
         ),
       ),
       body: Column(
         children: [
-          // Barra de pesquisa
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: TextField(
@@ -145,7 +143,6 @@ class LocaisSalvosScreenState extends State<LocaisSalvosScreen> {
               ),
             ),
           ),
-          // Lista de locais salvos
           Expanded(
             child: _filteredPontosMapa.isEmpty
                 ? const Center(
@@ -162,9 +159,8 @@ class LocaisSalvosScreenState extends State<LocaisSalvosScreen> {
                     itemBuilder: (context, index) {
                       final ponto = _filteredPontosMapa[index];
                       return Dismissible(
-                        key: Key(ponto.id), // Chave única para o item
-                        direction: DismissDirection
-                            .endToStart, // Deslizar da direita para a esquerda
+                        key: Key(ponto.id),
+                        direction: DismissDirection.endToStart,
                         background: Container(
                           color: Colors.red,
                           alignment: Alignment.centerRight,
@@ -175,8 +171,7 @@ class LocaisSalvosScreenState extends State<LocaisSalvosScreen> {
                           ),
                         ),
                         onDismissed: (direction) {
-                          _deletarPontoMapa(
-                              ponto.id); // Excluir o ponto ao deslizar
+                          _deletarPontoMapa(ponto.id);
                         },
                         child: Card(
                           margin: const EdgeInsets.symmetric(
@@ -213,7 +208,6 @@ class LocaisSalvosScreenState extends State<LocaisSalvosScreen> {
                               onPressed: () => _navegarParaEditarPonto(ponto),
                             ),
                             onTap: () {
-                              // Retornar as coordenadas do local selecionado
                               Navigator.pop(context, ponto.localizacao);
                             },
                           ),

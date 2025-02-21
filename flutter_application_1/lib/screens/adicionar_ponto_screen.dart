@@ -1,60 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/mapa.dart';
+import 'package:latlong2/latlong.dart'; // Importe o LatLng do latlong2
 
-class EditarLocalScreen extends StatefulWidget {
-  final PontoMapa ponto;
-  final VoidCallback onPontoEditado;
-  const EditarLocalScreen({
-    super.key,
-    required this.ponto,
-    required this.onPontoEditado,
-  });
+class AdicionarPontoScreen extends StatefulWidget {
+  final LatLng localizacao; // Usando LatLng do latlong2
+
+  const AdicionarPontoScreen({super.key, required this.localizacao});
 
   @override
-  EditarLocalScreenState createState() => EditarLocalScreenState();
+  AdicionarPontoScreenState createState() => AdicionarPontoScreenState();
 }
 
-class EditarLocalScreenState extends State<EditarLocalScreen> {
+class AdicionarPontoScreenState extends State<AdicionarPontoScreen> {
   final TextEditingController _tituloController = TextEditingController();
   final TextEditingController _descricaoController = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-    _tituloController.text = widget.ponto.titulo;
-    _descricaoController.text = widget.ponto.descricao;
-  }
-
-  Future<void> _salvarAlteracoes() async {
-    try {
-      final novoPonto = PontoMapa(
-        id: widget.ponto.id,
-        titulo: _tituloController.text,
-        descricao: _descricaoController.text,
-        localizacao: widget.ponto.localizacao,
-        userId: widget.ponto.userId,
-      );
-
-      await FirebaseFirestore.instance
-          .collection('mapa')
-          .doc(widget.ponto.id)
-          .update(novoPonto.toJson());
-
-      if (!mounted) return;
-
-      Navigator.pop(context, novoPonto); // Retorna o ponto editado
-    } catch (e) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Erro ao salvar alterações: $e"),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,7 +23,7 @@ class EditarLocalScreenState extends State<EditarLocalScreen> {
         backgroundColor: const Color(0xFF133E87),
         title: const Center(
           child: Text(
-            'Editar Local',
+            'Adicionar Ponto',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -76,7 +34,7 @@ class EditarLocalScreenState extends State<EditarLocalScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
-            Navigator.pop(context);
+            Navigator.pop(context); // Volta para a tela anterior
           },
         ),
       ),
@@ -101,14 +59,23 @@ class EditarLocalScreenState extends State<EditarLocalScreen> {
             ),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: _salvarAlteracoes,
+              onPressed: () {
+                final titulo = _tituloController.text;
+                final descricao = _descricaoController.text;
+                if (titulo.isNotEmpty && descricao.isNotEmpty) {
+                  Navigator.pop(context, {
+                    'titulo': titulo,
+                    'descricao': descricao,
+                  });
+                }
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF133E87),
                 padding:
                     const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
               ),
               child: const Text(
-                'Salvar',
+                'Confirmar',
                 style: TextStyle(fontSize: 16, color: Colors.white),
               ),
             ),
