@@ -80,6 +80,10 @@ class _DeckScreenState extends State<DeckScreen> {
     }
   }
 
+  void _deleteCard(String cardId) async {
+    await _firestore.collection('decks').doc(widget.deckId).collection('cards').doc(cardId).delete();
+  }
+
   void _editDeckName() async {
     TextEditingController _nameController = TextEditingController(text: deckName);
     await showDialog(
@@ -239,19 +243,32 @@ class _DeckScreenState extends State<DeckScreen> {
                                   child: ListView.builder(
                                     itemCount: cards.length,
                                     itemBuilder: (context, index) {
-                                      return Card(
-                                        elevation: 2,
-                                        margin: const EdgeInsets.symmetric(
-                                            vertical: 6),
-                                        child: ListTile(
-                                          title: Text(cards[index]['text'] ?? ""),
-                                          subtitle: Text(cards[index]['answer'] ?? ""),
-                                          trailing: IconButton(
-                                            icon: const Icon(Icons.edit),
-                                            onPressed: () => _navigateToEditCard(
-                                              cards[index]['id']!,
-                                              cards[index]['text']!,
-                                              cards[index]['answer']!,
+                                      return Dismissible(
+                                        key: Key(cards[index]['id']!), 
+                                        direction: DismissDirection.endToStart,
+                                        background: Container(
+                                          color: Colors.red,
+                                          alignment: Alignment.centerRight,
+                                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                                          child: const Icon(Icons.delete, color: Colors.white),
+                                        ),
+                                        onDismissed: (direction) {
+                                          _deleteCard(cards[index]['id']!);
+                                          cards.removeAt(index); 
+                                        },
+                                        child: Card(
+                                          elevation: 2,
+                                          margin: const EdgeInsets.symmetric(vertical: 6),
+                                          child: ListTile(
+                                            title: Text(cards[index]['text'] ?? ""),
+                                            subtitle: Text(cards[index]['answer'] ?? ""),
+                                            trailing: IconButton(
+                                              icon: const Icon(Icons.edit),
+                                              onPressed: () => _navigateToEditCard(
+                                                cards[index]['id']!,
+                                                cards[index]['text']!,
+                                                cards[index]['answer']!,
+                                              ),
                                             ),
                                           ),
                                         ),
@@ -259,6 +276,7 @@ class _DeckScreenState extends State<DeckScreen> {
                                     },
                                   ),
                                 ),
+
                               ],
                             ),
                           ),

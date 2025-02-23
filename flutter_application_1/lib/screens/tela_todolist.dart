@@ -133,79 +133,85 @@ Widget build(BuildContext context) {
                 itemCount: tasks.length,
                 itemBuilder: (context, index) {
                   final task = tasks[index];
-                  return Card(
-                    margin: const EdgeInsets.symmetric(
-                        horizontal: 16.0, vertical: 7.0),
-                    elevation: 4,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                  return Dismissible(
+                    key: Key(task.id), 
+                    direction: DismissDirection.endToStart, 
+                    background: Container(
+                      color: Colors.red,
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: const Icon(Icons.delete, color: Colors.white),
                     ),
-                    child: ListTile(
-                      title: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            task.title,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF133E87),
-                            ),
-                          ),
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.access_time,
-                                size: 16,
-                                color: Colors.black54,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                task.hour,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.black54,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
+                    onDismissed: (direction) {
+                      _deletetask(task);
+                    },
+                    child: Card(
+                      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 7.0),
+                      elevation: 4,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      subtitle: Text(
-                        task.description,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black45,
+                      child: ListTile(
+                        title: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              task.title,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF133E87),
+                              ),
+                            ),
+                            Row(
+                              children: [
+                                const Icon(Icons.access_time, size: 16, color: Colors.black54),
+                                const SizedBox(width: 4),
+                                Text(
+                                  task.hour,
+                                  style: const TextStyle(fontSize: 14, color: Colors.black54),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        subtitle: Text(
+                          task.description,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black45,
+                          ),
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.edit, color: Colors.black87),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => EditarTask(task: task)),
+                                );
+                              },
+                            ),
+                            Checkbox(
+                              value: task.isComplete,
+                              onChanged: (value) {
+                                FirebaseFirestore.instance
+                                    .collection('tasks')
+                                    .doc(task.id)
+                                    .update({'isComplete': value});
+                              },
+                            ),
+                          ],
                         ),
                       ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.edit, color: Colors.black87),
-                            onPressed: () {
-                              Navigator.push(context, MaterialPageRoute(builder: (context) => EditarTask(task: task)));
-                            },
-                          ),
-                          Checkbox(
-                            value: task.isComplete,
-                            onChanged: (value) {
-                              FirebaseFirestore.instance
-                                  .collection('tasks')
-                                  .doc(task.id)
-                                  .update({'isComplete': value});
-                            },
-                          ),
-                        ],
-                      ),
-                      onTap: () {
-                        _deletetask(task);
-                      },
                     ),
                   );
                 },
               );
+
             },
           ),
         ),
