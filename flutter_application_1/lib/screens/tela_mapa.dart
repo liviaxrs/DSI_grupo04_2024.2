@@ -10,7 +10,7 @@ import '../models/mapa.dart';
 import 'locais_salvos_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'adicionar_ponto_screen.dart';
-import '../services/poi_service.dart'; // Importação do POIService
+import '../services/poi_service.dart';
 
 class MapaScreen extends StatefulWidget {
   final LatLng? localSelecionado;
@@ -31,15 +31,15 @@ class MapaScreenState extends State<MapaScreen> {
   final List<PontoMapa> _pontosMapa = [];
   final TextEditingController _tituloController = TextEditingController();
   final TextEditingController _descricaoController = TextEditingController();
-  final POIService _poiService = POIService(); // Instância do POIService
+  final POIService _poiService = POIService();
 
   LatLng _currentLocation = const LatLng(-23.550520, -46.633308);
   LatLng? _primeiroToqueLocation;
   Marker? _marcadorTemporario;
   String? _userId;
-  bool _carregandoPOIs = false; // Indicador de carregamento
+  bool _carregandoPOIs = false;
+  String? _filtroSelecionado;
 
-  // Lista de sugestões de locais
   List<Map<String, dynamic>> _sugestoes = [];
 
   @override
@@ -105,11 +105,19 @@ class MapaScreenState extends State<MapaScreen> {
     await _carregarPontosMapa();
   }
 
-  Future<void> buscarEExibirPOIs(LatLng localizacao,
-      {String tipo = 'todos'}) async {
+  Future<void> buscarEExibirPOIs(LatLng localizacao, {String? tipo}) async {
     setState(() {
-      _carregandoPOIs = true; // Ativa o indicador de carregamento
+      _carregandoPOIs = true;
     });
+
+    if (tipo == null) {
+      // Se o filtro foi desmarcado, limpa os POIs
+      setState(() {
+        _carregandoPOIs = false;
+        _poiMarkers.clear();
+      });
+      return;
+    }
 
     String amenityFilter = '';
     if (tipo == 'cafe') {
@@ -123,11 +131,10 @@ class MapaScreenState extends State<MapaScreen> {
     final pois =
         await _poiService.buscarPOIs(localizacao, 20000, amenityFilter);
 
-    developer.log('POIs encontrados: ${pois.length}'); // Log para depuração
+    developer.log('POIs encontrados: ${pois.length}');
 
     setState(() {
-      _carregandoPOIs = false; // Desativa o indicador de carregamento
-
+      _carregandoPOIs = false;
       // Limpa todos os marcadores de POIs antigos
       _poiMarkers.clear();
 
@@ -137,17 +144,17 @@ class MapaScreenState extends State<MapaScreen> {
           const SnackBar(
               content: Text('Nenhum ponto de interesse encontrado.')),
         );
-      }
-
-      // Adiciona marcadores para os POIs encontrados (filtrados)
-      for (var poi in pois) {
-        _poiMarkers.add(Marker(
-          width: 40,
-          height: 40,
-          point: LatLng(poi['lat'], poi['lon']),
-          child: const Icon(Icons.location_pin, color: Colors.orange),
-          key: Key('poi_${poi['id']}'), // Gera um key único para cada POI
-        ));
+      } else {
+        // Adiciona marcadores para os POIs encontrados (filtrados)
+        for (var poi in pois) {
+          _poiMarkers.add(Marker(
+            width: 40,
+            height: 40,
+            point: LatLng(poi['lat'], poi['lon']),
+            child: const Icon(Icons.location_pin, color: Colors.orange),
+            key: Key('poi_${poi['id']}'),
+          ));
+        }
       }
     });
   }
@@ -166,9 +173,9 @@ class MapaScreenState extends State<MapaScreen> {
     setState(() {
       _pontosMapa.clear();
 
-      // Remove apenas os marcadores de pontos salvos
-      _markers.removeWhere(
-          (marker) => marker.key.toString().startsWith('ponto_salvo_'));
+      // Remove todos os marcadores, exceto o da localização atual
+      _markers
+          .removeWhere((marker) => marker.key != const Key('current_location'));
 
       // Adiciona os pontos salvos ao conjunto de marcadores
       _pontosMapa.addAll(querySnapshot.docs
@@ -181,8 +188,7 @@ class MapaScreenState extends State<MapaScreen> {
           height: 40,
           point: ponto.localizacao,
           child: const Icon(Icons.location_pin, color: Colors.blue),
-          key: Key(
-              'ponto_salvo_${ponto.id}_${ponto.userId}_${DateTime.now().millisecondsSinceEpoch}'),
+          key: Key(ponto.id), // Chave simples
         ));
       }
     });
@@ -212,6 +218,13 @@ class MapaScreenState extends State<MapaScreen> {
   }
 
   void _onMapTap(TapPosition tapPosition, LatLng localizacao) {
+    // Remove o marcador do local pesquisado, se existir
+    setState(() {
+      _markers
+          .removeWhere((marker) => marker.key == const Key('local_pesquisado'));
+    });
+
+    // Adiciona um marcador temporário se não houver um já
     if (_primeiroToqueLocation == null) {
       setState(() {
         _primeiroToqueLocation = localizacao;
@@ -271,7 +284,10 @@ class MapaScreenState extends State<MapaScreen> {
   }
 
   void _recarregarPontos() async {
+    developer.log('Recarregando pontos...');
     await _carregarPontosMapa();
+    _mapController.move(
+        _currentLocation, _mapController.camera.zoom); // Forçar atualização
   }
 
   // Função para pesquisar endereço usando Nominatim
@@ -320,7 +336,12 @@ class MapaScreenState extends State<MapaScreen> {
     final latLng = LatLng(sugestao['lat'], sugestao['lon']);
     setState(() {
       _currentLocation = latLng;
-      _markers.clear(); // Limpa marcadores anteriores
+
+      // Remove apenas o marcador do local pesquisado anterior, se existir
+      _markers
+          .removeWhere((marker) => marker.key == const Key('local_pesquisado'));
+
+      // Adiciona o novo marcador do local pesquisado
       _markers.add(Marker(
         width: 40,
         height: 40,
@@ -330,10 +351,10 @@ class MapaScreenState extends State<MapaScreen> {
       ));
     });
 
-    _mapController.move(latLng, 13.0); // Move o mapa para a localização
-    _pesquisaController.text = sugestao['nome']; // Atualiza o texto da pesquisa
+    _mapController.move(latLng, 13.0);
+    _pesquisaController.text = sugestao['nome'];
     setState(() {
-      _sugestoes.clear(); // Limpa as sugestões após selecionar
+      _sugestoes.clear();
     });
   }
 
@@ -354,29 +375,100 @@ class MapaScreenState extends State<MapaScreen> {
             ),
           ),
         ),
+        leading: Row(
+          children: [
+            PopupMenuButton<String>(
+              onSelected: (String tipo) async {
+                if (_filtroSelecionado == tipo) {
+                  // Desmarca o filtro se ele já estiver selecionado
+                  setState(() {
+                    _filtroSelecionado = null;
+                  });
+                  await buscarEExibirPOIs(_currentLocation,
+                      tipo: null); // Limpa os POIs
+                } else {
+                  // Aplica o novo filtro
+                  setState(() {
+                    _filtroSelecionado = tipo;
+                  });
+                  await buscarEExibirPOIs(_currentLocation, tipo: tipo);
+                }
+              },
+              itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                PopupMenuItem<String>(
+                  value: 'cafe',
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.local_cafe,
+                        color: _filtroSelecionado == 'cafe'
+                            ? const Color(0xFF133E87)
+                            : Colors.black,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Cafés',
+                        style: TextStyle(
+                          color: _filtroSelecionado == 'cafe'
+                              ? const Color(0xFF133E87)
+                              : Colors.black,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                PopupMenuItem<String>(
+                  value: 'library',
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.local_library,
+                        color: _filtroSelecionado == 'library'
+                            ? const Color(0xFF133E87)
+                            : Colors.black,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Livrarias',
+                        style: TextStyle(
+                          color: _filtroSelecionado == 'library'
+                              ? const Color(0xFF133E87)
+                              : Colors.black,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                PopupMenuItem<String>(
+                  value: 'todos',
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.all_inclusive,
+                        color: _filtroSelecionado == 'todos'
+                            ? const Color(0xFF133E87)
+                            : Colors.black,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Todos',
+                        style: TextStyle(
+                          color: _filtroSelecionado == 'todos'
+                              ? const Color(0xFF133E87)
+                              : Colors.black,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+              icon: const Icon(Icons.filter_list, color: Colors.white),
+            ),
+          ],
+        ),
         actions: [
-          PopupMenuButton<String>(
-            onSelected: (String tipo) async {
-              await buscarEExibirPOIs(_currentLocation, tipo: tipo);
-            },
-            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-              const PopupMenuItem<String>(
-                value: 'cafe',
-                child: Text('Cafés'),
-              ),
-              const PopupMenuItem<String>(
-                value: 'library',
-                child: Text('Livrarias'),
-              ),
-              const PopupMenuItem<String>(
-                value: 'todos',
-                child: Text('Todos'),
-              ),
-            ],
-            icon: const Icon(Icons.filter_list, color: Colors.white),
-          ),
           IconButton(
-            icon: const Icon(Icons.list, color: Colors.white),
+            icon: const Icon(Icons.bookmark, color: Colors.white),
             onPressed: () async {
               final coordenadas = await Navigator.push(
                 context,
@@ -400,8 +492,8 @@ class MapaScreenState extends State<MapaScreen> {
           FlutterMap(
             mapController: _mapController,
             options: MapOptions(
-              initialCenter: _currentLocation, // Localização inicial
-              initialZoom: 13.0, // Zoom inicial
+              initialCenter: _currentLocation,
+              initialZoom: 13.0,
               onTap: _onMapTap,
             ),
             children: [
@@ -410,15 +502,11 @@ class MapaScreenState extends State<MapaScreen> {
                     'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
               ),
               MarkerLayer(
-                markers: [..._markers, ..._poiMarkers]
-                    .toList(), // Combina marcadores gerais e POIs
+                markers: [..._markers, ..._poiMarkers].toList(),
               ),
             ],
           ),
-          if (_carregandoPOIs)
-            const Center(
-                child:
-                    CircularProgressIndicator()), // Indicador de carregamento
+          if (_carregandoPOIs) const Center(child: CircularProgressIndicator()),
           Positioned(
             top: 10,
             left: 10,
@@ -484,7 +572,7 @@ class MapaScreenState extends State<MapaScreen> {
                 hintStyle: TextStyle(color: Colors.black54),
                 border: InputBorder.none,
               ),
-              onChanged: _atualizarSugestoes, // Atualiza sugestões ao digitar
+              onChanged: _atualizarSugestoes,
             ),
           ),
           IconButton(
