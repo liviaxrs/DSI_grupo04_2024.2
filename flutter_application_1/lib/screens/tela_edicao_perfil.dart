@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:proAluno/screens/tela_historicometas.dart';
 import '../models/user.dart';
 
 class EdicaoPerfil extends StatefulWidget {
@@ -222,6 +221,11 @@ class _EdicaoPerfilState extends State<EdicaoPerfil> {
     );
   }
 
+  Future<void> _sairDaConta() async {
+    await FirebaseAuth.instance.signOut();
+    Navigator.pushReplacementNamed(context, '/tela_login'); // Redireciona para a tela de login
+  }
+
   Widget _buildTextField(
       TextEditingController controller, String label, IconData icon,
       {bool obscureText = false}) {
@@ -252,17 +256,10 @@ class _EdicaoPerfilState extends State<EdicaoPerfil> {
         centerTitle: true,
         actions: [
         IconButton(
-          icon: const Icon(Icons.history),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => HistoricoMetasScreen(),
-              ),
-            );
-          },
-        ),
-      ],
+            icon: const Icon(Icons.exit_to_app, color: Colors.white),
+            onPressed: _sairDaConta,
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

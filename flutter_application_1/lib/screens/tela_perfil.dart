@@ -5,6 +5,7 @@ import '../models/user.dart';
 import '../models/task.dart';
 import '../models/meta.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:proAluno/screens/tela_historicometas.dart';
 
 class PerfilScreen extends StatefulWidget {
   const PerfilScreen({super.key});
@@ -161,11 +162,6 @@ class _PerfilScreenState extends State<PerfilScreen> {
     });
   }
 
-  Future<void> _sairDaConta() async {
-    await FirebaseAuth.instance.signOut();
-    Navigator.pushReplacementNamed(context, '/tela_login'); // Redireciona para a tela de login
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -187,9 +183,16 @@ class _PerfilScreenState extends State<PerfilScreen> {
           ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.exit_to_app, color: Colors.white),
-            onPressed: _sairDaConta,
-          ),
+          icon: const Icon(Icons.history, color: Colors.white),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => HistoricoMetasScreen(),
+              ),
+            );
+          },
+        ),
         ],
       ),
       body: SizedBox.expand(
@@ -257,7 +260,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
                                             ? (_taskCount / _meta!.taskGoal).clamp(0.0, 1.0)
                                             : 0.0,
                                         backgroundColor: Colors.grey[300],
-                                        color: Colors.blue,
+                                        color:  Color(0xFF133E87),
                                         strokeWidth: 8,
                                       ),
                                     ),
@@ -313,7 +316,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
                                         barRods: [
                                           BarChartRodData(
                                             toY: entry.value.toDouble(),
-                                            color: Colors.blue,
+                                            color: Color(0xFF133E87),
                                             width: 16,
                                             borderRadius: BorderRadius.circular(4),
                                           ),
