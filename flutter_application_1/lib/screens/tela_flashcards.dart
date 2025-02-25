@@ -95,6 +95,15 @@ class _FlashcardScreenState extends State<flashcardScreen> {
     );
   }
 
+  void _deleteDeck(int index) async {
+    await _firestore.collection('decks').doc(filteredDecks[index]['id']).delete();
+    setState(() {
+      allDecks.removeWhere((deck) => deck['id'] == filteredDecks[index]['id']);
+      filteredDecks.removeAt(index);
+    });
+  }
+
+
   void _deleteSelectedDecks() async {
     if (selectedDecks.isEmpty) return;
     showDialog(
@@ -190,55 +199,68 @@ class _FlashcardScreenState extends State<flashcardScreen> {
             child: ListView.builder(
               itemCount: filteredDecks.length,
               itemBuilder: (context, index) {
-                return GestureDetector(
-                  onLongPress: () {
-                    if (!isSelecting) _startSelectionMode();
-                    _toggleSelection(index);
+                return Dismissible(
+                  key: Key(filteredDecks[index]['id']!),
+                  direction: DismissDirection.endToStart,
+                  background: Container(
+                    color: Colors.red,
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: const Icon(Icons.delete, color: Colors.white),
+                  ),
+                  onDismissed: (direction) {
+                    _deleteDeck(index);
                   },
-                  onTap: () async {
-                    if (isSelecting) {
+                  child: GestureDetector(
+                    onLongPress: () {
+                      if (!isSelecting) _startSelectionMode();
                       _toggleSelection(index);
-                    } else {
-                      bool? updated = await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => DeckScreen(
-                            deckId: filteredDecks[index]['id']!,
-                            deckName: filteredDecks[index]['name']!,
+                    },
+                    onTap: () async {
+                      if (isSelecting) {
+                        _toggleSelection(index);
+                      } else {
+                        bool? updated = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => DeckScreen(
+                              deckId: filteredDecks[index]['id']!,
+                              deckName: filteredDecks[index]['name']!,
+                            ),
                           ),
-                        ),
-                      );
-                      if (updated == true) {
-                        _loadDecks();
+                        );
+                        if (updated == true) {
+                          _loadDecks();
+                        }
                       }
-                    }
-                  },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                    decoration: BoxDecoration(
-                      color: selectedDecks.contains(index)
-                          ? Colors.grey[300]
-                          : Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: ListTile(
-                      title: Text(filteredDecks[index]['name']!),
-                      trailing: isSelecting
-                          ? Checkbox(
-                              value: selectedDecks.contains(index),
-                              onChanged: (bool? value) {
-                                _toggleSelection(index);
-                              },
-                            )
-                          : const Icon(Icons.arrow_forward_ios),
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                      decoration: BoxDecoration(
+                        color: selectedDecks.contains(index)
+                            ? Colors.grey[300]
+                            : Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: ListTile(
+                        title: Text(filteredDecks[index]['name']!),
+                        trailing: isSelecting
+                            ? Checkbox(
+                                value: selectedDecks.contains(index),
+                                onChanged: (bool? value) {
+                                  _toggleSelection(index);
+                                },
+                              )
+                            : const Icon(Icons.arrow_forward_ios),
+                      ),
                     ),
                   ),
                 );
